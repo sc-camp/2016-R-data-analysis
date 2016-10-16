@@ -353,7 +353,7 @@ We will use a large dataset (400K+ rows) to illustrate the effect of paralleliza
 
     > air = read.csv(url("http://packages.revolutionanalytics.com/datasets/AirOnTimeCSV2012/airOT201201.csv"))
 
-**NOTE**: If downloading the air dataset (above line) takes too much time you can load it from a file on the cluster (or on the data folder on this repo):
+**NOTE**: If downloading the air dataset (above line) takes too much time you can load it from a file on the cluster (or find it as a zipped file on the data folder on this repo):
 
 	> load("~jemeras/data/air.rda")
 
