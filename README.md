@@ -127,21 +127,6 @@ A call to `sessionInfo()` function will return `ggplot2` version as it is now at
 Movies dataset, derived from data provided by [IMDB](http://imdb.com) is a sample dataset available in `ggplot2` for testing purpose. Its data description can be found [here](http://had.co.nz/data/movies/description.pdf).
 Thus, when loading `ggplot2` library, this dataset is available under the name: `movies`.
 
-(OPTIONAL) An other way to get the dataset would be to download, extract and read it with:
-
-    movies_url = "http://had.co.nz/data/movies/movies.tab.gz"								# this is the http url of data file
-	## Download the file from given url to given destination file
-	user_ = Sys.getenv("USER")
-	dest_dir = paste0("/tmp/", user_)
-	system(paste0("mkdir ", dest_dir))
-	dest_file = paste0(dest_dir, "/movies.tab.gz")					
-    download.file(movies_url, destfile=dest_file)											# we download the data file with `download.file()` function and save it in /tmp
-	## Extract the .gz using system's gzip command
-    system(paste0("gzip -d ", dest_file))													# `system()` function executes system calls
-	dest_file = paste0(dest_dir, "/movies.tab")
-	## Load the file in a dataframe with read.table() function
-    movies = read.table(dest_file, sep="\t", header=TRUE, quote="", comment="")				# `read.table()` function reads a file and stores it in a data.frame object
-
 
 Now let's take a (reproducible) sample of 1000 movies and plot their distribution regarding their rating.
 
@@ -368,7 +353,7 @@ We will use a large dataset (400K+ rows) to illustrate the effect of paralleliza
 
     > air = read.csv(url("http://packages.revolutionanalytics.com/datasets/AirOnTimeCSV2012/airOT201201.csv"))
 
-**NOTE**: If downloading the air dataset (above line) takes too much time you can load it from a file on the cluster:
+**NOTE**: If downloading the air dataset (above line) takes too much time you can load it from a file on the cluster (or on the data folder on this repo):
 
 	> load("~jemeras/data/air.rda")
 
