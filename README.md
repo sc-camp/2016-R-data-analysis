@@ -1,6 +1,6 @@
 `README.md`
 
-Copyright (c) 2014 Joseph Emeras <joseph.emeras@uni.lu>
+Copyright (c) 2014 Joseph Emeras <joseph.emeras@gmail.com>
 
 -------------------
 # R Tutorial
