@@ -1,0 +1,18 @@
+{
+    "contents" : "library(ggplot2)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(broom)\nlibrary(car)\nlibrary(boot)\nlibrary(data.table)\nlibrary(gridExtra)\nlibrary(GGally)\nlibrary(visreg)\n\ndecay = data.table(read.csv(\"data/decay.csv\"))\nprint(summary(decay))\nprint(str(decay))\n\nggpairs(decay)\n\nhist(decay$TIME)\nhist(decay$MASSLEFT)\nggplot(data=decay, aes(x=TIME, y=MASSLEFT)) + geom_boxplot() + theme_bw()\nggplot(data=decay, aes(x=TIME, y=MASSLEFT)) + geom_point() + theme_bw()\n\nggplot(data=decay, aes(x=TIME, y=log(MASSLEFT))) + geom_point() + theme_bw()\nggplot(data=decay, aes(x=TIME, y=log(MASSLEFT))) + geom_point() + theme_bw() + geom_smooth(method=\"lm\")\n\npar(mfrow=c(2,2))\n\nlm.1 = lm(MASSLEFT~TIME, data=decay)\nplot(lm.1)\n## crappy\n\nlm.2 = lm(log(MASSLEFT)~TIME, data=decay)\nplot(lm.2)\n## better\n\npar(mfrow=c(1,1))\n\nsummary(lm.2)\nvisreg(lm.2)\n\nto_predict = seq(0, 30, .1)\npred_MASS = predict(lm.2, list(TIME=to_predict), int=\"c\")\n\ndf_pred = cbind(data.frame(TIME=to_predict), exp(pred_MASS))\n\n\n## now plot, do not forget to expo the predictions\nplot(MASSLEFT~TIME, data=decay)\nmatlines(to_predict,exp(pred_MASS),lty=c(1,2,2),col=\"black\")\n\n## OR\nggplot(data=decay) + geom_point(aes(y=MASSLEFT, x=TIME)) + theme_bw() + geom_line(data=df_pred, aes(x=TIME, y=fit), color=\"blue\") + geom_ribbon(data=df_pred, aes(x=TIME, ymin=lwr, ymax=upr), alpha=.2)\n\n\n\n",
+    "created" : 1449222505396.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1189065230",
+    "id" : "B311A634",
+    "lastKnownWriteTime" : 1449224856,
+    "path" : "~/Documents/formations/R - Ecosse/exercises/module9/non_linear.R",
+    "project_path" : "non_linear.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

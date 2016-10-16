@@ -1,0 +1,116 @@
+---
+title: "Models Workflow"
+author: "Joseph Emeras"
+date: "December 2015"
+output: html_document
+---
+<!-- Load usefull libraries -->
+```{r, echo=FALSE, message=FALSE} 
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(broom)
+library(car)
+library(boot)
+library(data.table)
+library(gridExtra)
+library(GGally)
+library(visreg)
+```
+
+
+# General workflow for data analysis
+
+## 1. sanitize data  
+**Goal**: detect and treat outliers. The treamtment can be removal or simply identification of "particular" values.  
+`str()`, `summary()`, `quantile()` and boxplot and histograms are helpfull for that (for numeric values only).
+
+
+```{r, echo=TRUE, results='hide', fig.show='hide'}
+## First we read the data and print its characteristics
+data_path = "./courses/Mod_4_mult_regr/WOLFPUPS.csv"
+data_to_model = data.table(read.csv(data_path))
+
+print(summary(data_to_model))
+print(str(data_to_model))
+
+## Now some plotting to visualize data and look for abnormal values
+data_terms = names(data_to_model)
+data_terms_length = length(data_terms)
+par(mfrow=c(ceiling(data_terms_length/2), 2))
+# sapply(data_to_model, function(x) {if(!is.factor(x)) hist(x)})
+sapply(seq_len(ncol(data_to_model)), function(i) hist(data.frame(data_to_model)[,i], main = "", xlab=colnames(data_to_model)[i]))
+par(mfrow=c(1,1))
+
+## remove year 2016 that is an error.
+data_to_model = data_to_model %>% filter(YEAR != 2016)
+```
+
+
+## 2. Data Visualization and Relationship Checks  
+  * visualize distributions: `ggplot()`, `hist()`  
+  * look for **colinearity**: `pairs()` `ggpairs()`  
+  * create the most complete model. Verify colinearity with `vif()` (score over 10) until model is minimal adequate.
+
+```{r, echo=TRUE, results='hide', fig.show='hide', warning=FALSE}
+RESPONSE=quote(data_terms[6])   # PUPS
+PREDICTOR1=quote(data_terms[3]) # CALVES
+PREDICTOR2=quote(data_terms[4]) # WORMS
+
+ggplot(data=data_to_model, aes_string(x = eval(PREDICTOR1), y = eval(RESPONSE), color = eval(PREDICTOR2))) + geom_point() + theme_bw()
+
+pairs(data_to_model)
+
+ggpairs(data_to_model)
+
+MOD.1<-lm(PUPS~ADULTS+CALVES+WORMS+PERMITS,data=data_to_model)
+par(mfrow=c(2,3))
+plot(MOD.1)
+hist(MOD.1$residuals)
+par(mfrow=c(1,1))
+vif(MOD.1)
+
+MOD.2tmp<-update(MOD.1,~. - ADULTS)
+MOD.2<-update(MOD.2tmp,~. - PERMITS)
+
+# reexamine vifs
+vif(MOD.2)
+
+```
+
+
+
+## 3. Analyze  
+  * model quality (assumption & fit)  
+  * simplification & selection  
+
+```{r, echo=TRUE, results='hide', fig.show='hide', warning=FALSE}
+# compare both models
+# **Warning** using anova between 2 models we look at RSS (residual sum of squares). If RSS not too high, ok we can prefer the simpler model.
+# But anova used to compare **only** 2 *nested* models, i.e. only one term differs. For different models use LogLik() or AIC().
+anova(MOD.1, MOD.2)
+AIC(MOD.1)
+AIC(MOD.2)
+summary(MOD.2)
+confint(MOD.2)
+
+avPlots(MOD.2)
+```
+
+
+## 4. Models with Interactions
+  * once minimal adequate model is found (no colinearity), try adding interactions with categorical independent variables (treatment).  
+  * same as previously, add the interaction with `:`
+
+
+## 5. Generalized Linear Models  
+  * use well-known distribution family to fit.  
+  * `glm()` with family being:  
+    * Poisson errors, for count data  
+    * Binomial errors, for proportion data  (0 or 1 -- aka logistic regression)
+    * Exponential errors, for time to event  
+    * Gamma errors, for data with constant CV (covariates)  
+
+## 6. Non-linear Models  
+Can be polynomial (generally degree 2) `poly(..., 2)`  
+Or use Nonlinear least squares regression `nls()`  

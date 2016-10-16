@@ -1,0 +1,18 @@
+{
+    "contents" : "library(ggplot2)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(broom)\nlibrary(car)\nlibrary(data.table)\n\ndata_growth = data.table(read.csv(\"data/growth.csv\"))\nprint(summary(data_growth))\n\ndata_growth$SUPPLEMENT = relevel(data_growth$SUPPLEMENT, ref=\"control\")\n\nggplot(data=data_growth, aes(x=SUPPLEMENT, y=GAIN, fill=DIET)) + theme_bw() + geom_boxplot() \n\nggplot(data=data_growth, aes(x=SUPPLEMENT, y=GAIN, color=DIET)) + theme_bw() + geom_point() #+ geom_smooth(method=\"lm\", fullrange = TRUE, se = FALSE) + expand_limits(x = 0, y = 0)\n\nlm.1 = lm(GAIN~DIET+SUPPLEMENT, data=data_growth)\nsummary(lm.1)\n\nlm.2 = lm(GAIN~DIET*SUPPLEMENT, data=data_growth)\nsummary(lm.2)\n\nlm.diet = lm(GAIN~DIET, data=data_growth)\nsummary(lm.diet)\nlm.supplement = lm(GAIN~SUPPLEMENT, data=data_growth)\nsummary(lm.diet)\n\nanova(lm.2, lm.1)\nanova(lm.1, lm.diet)\nanova(lm.1, lm.supplement)\n\nlogLik(lm.1)\nlogLik(lm.2)\nlogLik(lm.diet)\nlogLik(lm.supplement)\n\nAIC(lm.1)\nAIC(lm.2)\nAIC(lm.diet)\nAIC(lm.supplement)\n\npar(mfrow=c(2,2))\nplot(lm.1)\npar(mfrow=c(1,1))\n\npar(mfrow=c(2,2))\nplot(lm.2)\npar(mfrow=c(1,1))\n\n\n## lm.1 is the best \nsummary(lm.1)\n\n# Make a table of the weight gain predicted by the model for each of the 12 combinations of factor levels (i.e. diet = barley and supplement = control, diet = barley and supplement = agrimore, etc.) using the predict() function\n\nto_predict = expand.grid(DIET=levels(data_growth$DIET), SUPPLEMENT=levels(data_growth$SUPPLEMENT))\n\npredictions = predict(lm.1, to_predict)\n\nd_pr = data.frame(GROWTH=predictions, DIET=to_predict$DIET, SUPPLEMENT=to_predict$SUPPLEMENT)\n\n\n\n\n",
+    "created" : 1449057548434.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "511051842",
+    "id" : "C487D6A1",
+    "lastKnownWriteTime" : 1449060436,
+    "path" : "~/Documents/formations/R - Ecosse/exercises/module5/suppl_ex.R",
+    "project_path" : "suppl_ex.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

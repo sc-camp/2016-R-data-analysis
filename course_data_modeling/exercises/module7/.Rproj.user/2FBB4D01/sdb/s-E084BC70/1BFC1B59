@@ -1,0 +1,17 @@
+{
+    "contents" : "library(ggplot2)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(broom)\nlibrary(car)\nlibrary(boot)\nlibrary(data.table)\nlibrary(gridExtra)\nlibrary(GGally)\nlibrary(visreg)\n\ndata_species = data.table(read.csv(\"data/SPECIES.csv\"))\nprint(summary(data_species))\nprint(str(data_species))\n\nggpairs(data_species)\n\nggplot(data=data_species, aes(x=RICHNESS)) + theme_bw() + geom_bar(binwidth=3)\nggplot(data=data_species, aes(x=BIOMASS)) + theme_bw() + geom_bar(binwidth=1)\n\n## RICHNESS is discrete. Bounded to 0. looks like poisson distribution.\n## BIOMASS is continuous. Bounded to 0\n\np1 = ggplot(data_species, aes(x=BIOMASS, y=RICHNESS, color=PH)) + theme_bw() + geom_point() + geom_smooth(method=\"lm\")\np2 = ggplot(data_species) + theme_bw() + geom_point(aes(x=BIOMASS, y=RICHNESS))\np3 = ggplot(data_species) + theme_bw() + geom_point(aes(x=PH, y=RICHNESS))\n\ngrid.arrange(p1, p2, p3, ncol=3)\n\np_log = ggplot(data_species, aes(x=BIOMASS, y=log(RICHNESS), color=PH)) + theme_bw() + geom_point() + geom_smooth(method=\"lm\", se=FALSE)\nprint(p_log)\n## if we use log space we can see that there is an interaction.\n\n\nMOD.1<-glm(RICHNESS~BIOMASS*PH,data=data_species,family=poisson)\nsummary(MOD.1)\n## Residual deviance:  83.201  on 84  degrees of freedom so we are good.\n\n### try other stuff to see ho it is going\nsummary(glm(RICHNESS~BIOMASS+PH,data=data_species,family=poisson))  ## might be ok\nsummary(glm(RICHNESS~BIOMASS*PH,data=data_species,family=gaussian)) ## overdispersion\nsummary(glm(RICHNESS~BIOMASS+PH,data=data_species,family=gaussian)) ## overdispersion\n\npar(mfrow=c(2,2))\nplot(MOD.1)\n## good enough but we prefer the next one:\nglm.diag.plots(MOD.1)\n\n\n## try a model simplification\nMOD.2 = update(MOD.1, ~. - BIOMASS:PH)\nsummary(MOD.2)\n\n## analyze variance difference with X2 because it is a glm: no analytic solution.\nanova(MOD.1, MOD.2, test=\"Chi\")\n## p-value is 0.0003288 so we have to keep the first model.\n\n\ndata_to_predict = copy(data_species)\ndata_to_predict[,RICHNESS:=NULL]\n\n## glm so we use link and not response to get correct SE\ndata_to_predict$PRED_RICHNESS = predict(MOD.1, data_to_predict, type=\"link\", se.fit = TRUE)$fit\ndata_to_predict$PRED_SE = predict(MOD.1, data_to_predict, type=\"link\", se.fit = TRUE)$se.fit\n\nfull_data = merge(data_species, data_to_predict, by=c(\"PH\", \"BIOMASS\"))\n\n## Get a 'tidy' version of the model coefficients\ntidy(MOD.1)\n\n## Get a 'tidy' version of the model summary statistics\nglance(MOD.1)\n\n## 'Augment' adds columns to the original data set\naugment(MOD.1)\n\n\np_final = ggplot(full_data) + theme_bw() + geom_line(aes(x=BIOMASS, y=exp(PRED_RICHNESS), color=PH)) + geom_point(aes(x=BIOMASS, y=RICHNESS, color=PH)) + ylab(\"RICHNESS\") + geom_ribbon(aes(x=BIOMASS, ymin = exp(PRED_RICHNESS-1.96*PRED_SE), ymax = exp(PRED_RICHNESS+1.96*PRED_SE), group=PH, fill=PH), alpha=.3)\n\nprint(p_final)\n\nvisreg(MOD.1, xvar = \"BIOMASS\", scale = \"response\", rug=FALSE, by=\"PH\", overlay=TRUE)\n\n\n",
+    "created" : 1449133285361.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3811280992",
+    "id" : "1BFC1B59",
+    "lastKnownWriteTime" : 1449142771,
+    "path" : "~/Documents/formations/R - Ecosse/exercises/module6/glm_exe.R",
+    "project_path" : null,
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

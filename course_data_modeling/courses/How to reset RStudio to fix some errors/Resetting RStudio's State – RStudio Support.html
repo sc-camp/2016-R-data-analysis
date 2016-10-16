@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en-US"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <!-- v5219 -->
+  <title>Resetting RStudio's State – RStudio Support</title>
+
+  <meta content="authenticity_token" name="csrf-param">
+<meta content="0g0qwhj/8q9S1aaHcHVH1/TIB4j+lqFTl9qhslRratY=" name="csrf-token">
+  <meta content="http://p6.zdassets.com/hc/settings_assets/267570/200010388/skB5KdLlPKJnxt3QOlDGPQ-RStudio-Logo-White_small.png" property="og:image">
+<meta content="website" property="og:type">
+<meta content="RStudio Support" property="og:site_name">
+<meta content="Resetting RStudio's State" property="og:title">
+<meta content="Overview
+RStudio stores your custom settings and options in a hidden
+directory called RStudio-Desktop. If this directory does not exist,
+RStudio will create it on start up. This directory includ..." property="og:description">
+<meta content="http://support.rstudio.com/hc/en-us/articles/200534577-Resetting-RStudio-s-State" property="og:url">
+
+  <link href="https://support.rstudio.com/hc/en-us/articles/200534577-Resetting-RStudio-s-State" rel="canonical">
+
+  <!-- Entypo pictograms by Daniel Bruce — www.entypo.com -->
+  <link href="Resetting%20RStudio%27s%20State%20%E2%80%93%20RStudio%20Support_files/application-433a3475e04870b52e0af89928df443e.css" id="stylesheet" media="all" rel="stylesheet">
+  <link href="Resetting%20RStudio%27s%20State%20%E2%80%93%20RStudio%20Support_files/style-b3fb42ec7f42c193f54e9d6b730de0a4.css" rel="stylesheet" type="text/css">
+  <link href="https://p6.zdassets.com/hc/settings_assets/267570/200010388/Y0F8DITX8yNtQRm14HfxJw-rstudio.png" rel="shortcut icon">
+
+  <!--[if lt IE 9]>
+  <script>
+    //Enable HTML5 elements for <IE9
+    'abbr article aside audio bdi canvas data datalist details dialog \
+    figcaption figure footer header hgroup main mark meter nav output \
+    progress section summary template time video'.replace(/\w+/g,function(n){document.createElement(n)});
+  </script>
+<![endif]-->
+
+  <script src="Resetting%20RStudio%27s%20State%20%E2%80%93%20RStudio%20Support_files/analytics.js" async=""></script><script src="Resetting%20RStudio%27s%20State%20%E2%80%93%20RStudio%20Support_files/jquery-5a08650d795ef9efafdc55c72fab5e6d.js"></script>
+  <script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+ (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+ m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+ })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-20375833-11', 'auto');
+ga('send', 'pageview');
+
+</script>
+
+  
+
+  
+
+  <!-- add code here that should appear in the document head -->
+<link href="Resetting%20RStudio%27s%20State%20%E2%80%93%20RStudio%20Support_files/prettify.css" type="text/css" rel="stylesheet">
+  <script src="Resetting%20RStudio%27s%20State%20%E2%80%93%20RStudio%20Support_files/script-b3fb42ec7f42c193f54e9d6b730de0a4.js" type="text/javascript"></script>
+</head>
+<body class="community-enabled">
+
+
+  
+
+
+  <header class="header">
+  <div class="header-inner clearfix">
+    <div class="logo"><a href="https://support.rstudio.com/hc/en-us" title="Home"><img alt="Logo" src="Resetting%20RStudio%27s%20State%20%E2%80%93%20RStudio%20Support_files/skB5KdLlPKJnxt3QOlDGPQ-RStudio-Logo-White_small.png"></a></div>
+    <h2 style="
+    margin-top: 28px;
+    margin-left: 20px;
+    color: white;
+    float: left;
+    font-size: 2.3em;
+    text-shadow: 0 1px 0 #000000
+    ">Support</h2>
+    <nav class="user-nav">
+      
+      <a class="submit-a-request" href="https://support.rstudio.com/hc/en-us/requests/new">Premium support</a>
+      
+<a class="login" data-sso-action="signin" href="https://support.rstudio.com/access/login?theme=hc&amp;hc=true&amp;force_unaltered_return_to=true&amp;return_to=https%3A%2F%2Fsupport.rstudio.com%2Fhc%2Fen-us%2Farticles%2F200534577-Resetting-RStudio-s-State&amp;locale=1" role="button">Sign in</a>
+
+    </nav>
+  </div>
+</header>
+
+
+  <main role="main">
+    <nav class="sub-nav sub-nav-far clearfix">
+  <ol class="breadcrumbs"><li>
+  <a href="https://support.rstudio.com/hc/en-us">RStudio Support</a>
+</li>
+<li>
+  <a href="https://support.rstudio.com/hc/en-us/categories/200031758-Knowledge-Base">Knowledge Base</a>
+</li>
+<li>
+  <a href="https://support.rstudio.com/hc/en-us/sections/200096803-Troubleshooting">Troubleshooting</a>
+</li>
+</ol>
+  <form accept-charset="UTF-8" action="/hc/en-us/search" class="search-small" method="get" role="search"><div style="margin:0;padding:0;display:inline"><input name="utf8" value="✓" type="hidden"></div>
+  <input id="query" name="query" placeholder="Search" type="search">
+</form>
+</nav>
+
+<div class="clearfix">
+
+  <article class="main-column">
+
+    <header class="article-header clearfix">
+      <h1>
+ Resetting RStudio's State</h1>
+      <div class="article-metadata">
+        <div class="article-avatar"><img src="Resetting%20RStudio%27s%20State%20%E2%80%93%20RStudio%20Support_files/joshpaulson.jpg" alt="Avatar">
+</div>
+        <div class="article-author">Josh Paulson</div>
+        <div class="article-updated"><time data-datetime="calendar" datetime="2013-10-13T00:09:11Z" title="2013-10-13 00:09">October 13, 2013 00:09</time></div>
+      </div>
+      
+
+    </header>
+
+    <div class="article-body">
+      <h2>Overview</h2>
+<p>RStudio stores your custom settings and options in a hidden
+directory called RStudio-Desktop. If this directory does not exist,
+RStudio will create it on start up. This directory includes user
+settings, log files, and other state information. Removing (or
+renaming) this directory will reset RStudio's state analogous to a
+fresh installation.</p>
+<p>We recommend renaming this directory to create a backup version
+instead of completely deleting it. This allows you to save your
+settings, incase you want to revert back to them. Additionally, if
+you experienced a crash or RStudio failed to start, this directory
+may contain vital information for determining the source of the
+error. In this case, we recommend renaming this directory to
+<code>backup-rstudio-desktop</code> and sending it along with a
+support request.</p>
+<h2>Accessing the RStudio-Desktop Directory</h2>
+<h3>Windows</h3>
+<p>You can open an Explorer window into the RStudio-Desktop
+directory by typing the following command into Start -&gt; Run:</p>
+<p>For Windows Vista and 7:</p>
+<pre><code>%localappdata%\RStudio-Desktop</code>
+</pre>
+<p>For Windows XP:</p>
+<pre><code>%USERPROFILE%\Local Settings\Application Data\RStudio-Desktop</code>
+</pre>
+<p>You can then rename this directory to
+<code>backup-rstudio-desktop</code> and send it with your support
+request.</p>
+<br>
+<h3>Mac OS X</h3>
+<p>You can easily create a backup by running the following command
+from the terminal. Then you can send this backup with your support
+request:</p>
+<pre><code>mv ~/.rstudio-desktop ~/backup-rstudio-desktop</code>
+</pre>
+<p>Alternatively, you can open a Finder window into the
+rstudio-desktop directory by typing the following command at the
+Terminal:</p>
+<pre><code>open ~/.rstudio-desktop</code>
+</pre>
+<br>
+<h3>Linux</h3>
+<p>You can easily create a backup by running the following command
+from the terminal. Then you can send this backup with your support
+request:</p>
+<pre><code>mv ~/.rstudio-desktop ~/backup-rstudio-desktop</code>
+</pre>
+<p>Alternatively, you can open a File Browser into the
+rstudio-desktop directory by typing the following command at the
+Terminal:</p>
+<pre><code>nautilus ~/.rstudio-desktop</code>
+</pre>
+<p>Return to <a href="https://support.rstudio.com/hc/en-us/articles/200488498">
+Troubleshooting Guide: Using RStudio</a></p>
+    </div>
+
+    <div class="article-attachments">
+      <ul class="attachments">
+  
+</ul>
+
+    </div>
+
+    <footer class="article-footer clearfix">
+      <div class="article-vote">
+  <span class="article-vote-question">
+    Was this article helpful?
+  </span>
+  <div class="article-vote-controls">
+    <a data-original-title="Yes" class="article-vote-up" href="https://support.rstudio.com/access/login?theme=hc&amp;hc=true&amp;force_unaltered_return_to=true&amp;return_to=https%3A%2F%2Fsupport.rstudio.com%2Fhc%2Fen-us%2Farticles%2F200534577-Resetting-RStudio-s-State" rel="tooltip" role="button" title=""></a>
+    <a data-original-title="No" class="article-vote-down" href="https://support.rstudio.com/access/login?theme=hc&amp;hc=true&amp;force_unaltered_return_to=true&amp;return_to=https%3A%2F%2Fsupport.rstudio.com%2Fhc%2Fen-us%2Farticles%2F200534577-Resetting-RStudio-s-State" rel="tooltip" role="button" title=""></a>
+  </div>
+  <small class="article-vote-count">
+    1 out of 1 found this helpful
+  </small>
+</div>
+
+      <ul class="share">
+  <li><a href="http://www.facebook.com/share.php?title=Resetting+RStudio%27s+State&amp;u=https%3A%2F%2Fsupport.rstudio.com%2Fhc%2Fen-us%2Farticles%2F200534577-Resetting-RStudio-s-State" class="share-facebook">Facebook</a></li>
+  <li><a href="https://twitter.com/share?lang=en&amp;text=Resetting+RStudio%26%2339%3Bs+State&amp;url=https%3A%2F%2Fsupport.rstudio.com%2Fhc%2Fen-us%2Farticles%2F200534577-Resetting-RStudio-s-State" class="share-twitter">Twitter</a></li>
+  <li><a href="http://www.linkedin.com/shareArticle?mini=true&amp;source=RStudio+Support&amp;title=Resetting+RStudio%27s+State&amp;url=https%3A%2F%2Fsupport.rstudio.com%2Fhc%2Fen-us%2Farticles%2F200534577-Resetting-RStudio-s-State" class="share-linkedin">LinkedIn</a></li>
+  <li><a href="https://plus.google.com/share?hl=en-us&amp;url=https%3A%2F%2Fsupport.rstudio.com%2Fhc%2Fen-us%2Farticles%2F200534577-Resetting-RStudio-s-State" class="share-googleplus">Google+</a></li>
+</ul>
+
+    </footer>
+
+    <div class="article-more-questions">
+      Have more questions? <a href="https://support.rstudio.com/hc/en-us/requests/new">Submit a request</a>
+    </div>
+
+    <section class="article-comments">
+      <h2>Comments</h2>
+      
+      
+      
+
+  <p class="comment-closed-notification">Article is closed for comments.</p>
+
+
+    </section>
+
+  </article>
+
+  <aside class="article-sidebar side-column">
+    
+    
+  <section class="related-articles">
+    <h3>Related articles</h3>
+    <ul>
+      
+        <li>
+          <a href="https://support.rstudio.com/hc/en-us/articles/200488508-RStudio-Will-Not-Start">RStudio Will Not Start</a>
+        </li>
+      
+        <li>
+          <a href="https://support.rstudio.com/hc/en-us/articles/200321257-Running-a-Diagnostics-Report">Running a Diagnostics Report</a>
+        </li>
+      
+        <li>
+          <a href="https://support.rstudio.com/hc/en-us/articles/200554776-RStudio-Crash-Report">RStudio Crash Report</a>
+        </li>
+      
+        <li>
+          <a href="https://support.rstudio.com/hc/en-us/articles/200552316-Configuring-the-Server">Configuring the Server</a>
+        </li>
+      
+        <li>
+          <a href="https://support.rstudio.com/hc/en-us/articles/200552306-Getting-Started">Getting Started</a>
+        </li>
+      
+    </ul>
+  </section>
+
+
+  </aside>
+
+</div>
+
+
+  </main>
+
+    <footer class="footer">
+  <div class="footer-inner">
+    <!-- Footer content -->
+  </div>
+</footer>
+
+
+  <!-- / -->
+  
+
+  <script src="Resetting%20RStudio%27s%20State%20%E2%80%93%20RStudio%20Support_files/locales-5c110dc2fa19795cf86c00fbccc0be7bf362b598.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  /*
+
+    Greetings sourcecode lurker!
+
+    This is for internal Zendesk and legacy usage,
+    we don't support or guarentee any of these values
+    so please don't build stuff on top of them.
+
+  */
+
+  HelpCenter = {};
+  HelpCenter.account = {"subdomain":"rstudioide","environment":"production","name":"RStudio Support"};
+  HelpCenter.user = {"identifier":"da39a3ee5e6b4b0d3255bfef95601890afd80709","email":null,"name":null,"role":"anonymous","avatar_url":"https://assets.zendesk.com/images/frame_user.png","organizations":[],"groups":[]};
+  HelpCenter.internal = {"current_session":{"locale":"en-us","legacy_locale_id":1,"csrf_token":"0g0qwhj/8q9S1aaHcHVH1/TIB4j+lqFTl9qhslRratY=","shared_csrf_token":null},"settings":{"zopim_enabled":false,"spam_filter_enabled":true},"sso":{"enabled":false,"action":null,"return_to":"https://support.rstudio.com/hc/en-us","auth_domain":"https://rstudioide.zendesk.com","brand_id":2321856}};
+</script>
+
+  
+  <script data-modules="pages/enduser/common,pages/enduser/articles" id="zendesk-js" src="Resetting%20RStudio%27s%20State%20%E2%80%93%20RStudio%20Support_files/hc_enduser-354de7f9a3e2206effd8c320d057dd30.js"></script>
+  
+
+  
+
+
+</body></html>

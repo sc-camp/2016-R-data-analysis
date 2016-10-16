@@ -1,0 +1,18 @@
+{
+    "contents" : "library(tidyr) \nlibrary(dplyr)\n\n\n## Exercise 1\nMOTHS <- read.csv(\"data/MothCount.csv\")\nMOTHS <- rename(MOTHS, Sex = X, Dark = Dark.morph, Light = Light.morph)\n# > MOTHS\n#      Sex Dark Light\n# 1   Male    8     2\n# 2 Female    4     6\n\n##\n# Convert our data into key/value pairs using 'gather'\n# - 1. data [MOTHS]\n# - 2. key / value column names to create [Morph, Count] \n# - 3. columns to gather [Dark:Light]\n##\nMOTHS_T <- gather(MOTHS, Morph, Count, Dark:Light)\n# > MOTHS_T\n#      Sex Morph Count\n# 1   Male  Dark     8\n# 2 Female  Dark     4\n# 3   Male Light     2\n# 4 Female Light     6\n\n# > spread(MOTHS_T, Morph, Count)\n#      Sex Dark Light\n# 1 Female    4     6\n# 2   Male    8     2\n\n## Exercise 2\nCITYTEMPS = read.csv(\"data/TOM_CITIES.csv\")\nCITYTEMPS_T = gather(CITYTEMPS, Day, Temperature, Day.1:Day.10) %>% separate(Day, into=c(\"V1\",\"V2\")) %>% select(-V1) %>% rename(\"Day\"=V2)\n\n",
+    "created" : 1448878192592.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1736100638",
+    "id" : "753FF793",
+    "lastKnownWriteTime" : 1448879447,
+    "path" : "~/Documents/formations/R - Ecosse/exercises/module1/tidy.R",
+    "project_path" : "tidy.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

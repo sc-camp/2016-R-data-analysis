@@ -1,0 +1,18 @@
+{
+    "contents" : "library(ggplot2)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(broom)\nlibrary(car)\nlibrary(data.table)\n\ndata_ozone = read.csv(\"data/oneway.csv\")\nsummary(data_ozone)\n\n# do gardens differ in ozone levels?\n# predictor is garden\n# response is ozone\n\n\n\n### Data Control\nggplot(data=data_ozone, aes(x=GARDEN, y=OZONE, color=GARDEN)) + theme_bw() + geom_point() + geom_jitter()\nggplot(data=data_ozone, aes(x=factor(GARDEN), y=OZONE)) + theme_bw() + geom_boxplot() + xlab(\"GARDEN\")\n# we see no outliers so we continue\n\n\n### linear model\nlm_ozone = lm(OZONE~factor(GARDEN), data=data_ozone)\nsummary(lm_ozone)\n# vif(lm_ozone)\npar(mfrow=c(2,2))\nplot(lm_ozone)\npar(mfrow=c(1,1))\n\n## T-test will be used to reject the null hypothesis: the samples come from the same group.\ndata_ozone = data.table(data_ozone)\nt.test(data_ozone[GARDEN=='A']$OZONE, data_ozone[GARDEN=='B']$OZONE)\n\n\n",
+    "created" : 1449046465603.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3271988062",
+    "id" : "BE9E45E",
+    "lastKnownWriteTime" : 1449048872,
+    "path" : "~/Documents/formations/R - Ecosse/exercises/module5/interactions.R",
+    "project_path" : "interactions.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

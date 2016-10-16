@@ -1,0 +1,114 @@
+correlation plot permet voir certaines observations qui semblent pas bonnes. Sortent de la linearite
+
+tidyr package
+key value association
+--> gather(data, key, ....)
+
+dplyr: pipe %>%
+DATA %>% select <columns> %>% filter <rows> %>% arrange <by var>
+
+OLS: (ordinary Least Squares) Univariate Regression
+response: y 
+predictor: x
+residual = Yobs - Ypredicted
+on cherche a minimiser residuals
+F-ratio = explained/non-explained
+
+residuals vs fit plot should show no pattern
+QQ plot should be straight line 
+
+
+multiple regression: use vif() variance inflation.
+Si superieur 10 pas bon, il y a de la multicolinearite. 4-5 pas top non plus
+donc il faut enlever un attribut
+look at corelation plot (ggpairs)
+anova entre 2 modeles va donner RSS (residual sum of squares). si la hausse de RSS est pas forte, ok on peut preferer le modele le plus simple
+attention: anova si 2 modeles "nested" (adjacent) c'est a dire seul 1 terme differe.
+z-transformation se fait en mettant scale() devant termes a creation modele pour mettre sur meme echelle et comparer leur importance. attention a regarder les confint() quand meme.
+
+--> resume:
+1- cree modele le plus complet.
+2- detecte colinearite avec vif()
+3- use likelihood ratio tests to find the minimal adequate model. anova is one of them.
+4- get minimal model
+
+
+#####################
+interactions: does the effect of one predictor depends on another one -- ex: l'effet du vent depend du site (1 site ouvert 1 site ferme -- effet du vent !=) 
+#####################
+
+## factorial predictors
+on groupe observation par "classes" on utilise les factor pour s'assurer que les noms des groupes ne sont pas traites comme des nombres
+
+ex: 2 groups: correspondent 2 sites observation
+intercept is the mean of group 1 and the slope is the difference between mean of group 1 and group 2
+null hypothesis: il n'y a pas de differnece entre les groupes
+
+## ANCOVA
+
+## AIC
+if model not nested, need AIC and not ANOVA
+random increases noise and thus increase likelihood!!!
+AIC penalise la complexite (nombre de coefficients)
+lower is the AIC the best it fits
+
+###### INTERACTIONS: 
+tester vif dans une interaction ne fait pas de sens, il y a forcement colinearite dans une interaction. Donc on teste colinearite AVANT et apres on rajoute l'interaction.
+on teste l'interaction avec *, equivalent a un + et un :
+quand on teste l'interaction si on veut simplifier le modele ce sera forcement en enlevant l'interaction (les termes presents dans l'interaction doivent obligatoirement rester dans le modele, c'est logique)
+l'interaction entre 2 termes en fait c'est quand les 2 slopes sont !=
+donc on regarde la slope et la deviation de slope (et la std dev de la deviation) pour voir si les slopes sont ||
+si elles sont || on peut enlever l'interaction sans crainte.
+
+
+#####################
+Generalized Linear Models
+#####################
+
+residual deviance > 2* degrees of freedom: overdispersion
+residual deviance > 0.5* degrees of freedom: underdispersion
+
+
+#####################
+Predictions
+#####################
+
+attention confidnce interval en log space ca va pas. il faut les recuperer en link space et pas response puis transformer.
+sinon peux utiliser visreg
+
+
+#####################
+Non Linear Models
+#####################
+
+si diagnostic plots shows pattern in first curve like a U: not a lm straight line does not fit. Moreover last plot: leverage, if remove a point in leerage limits, another one will appear in the "bad" area.
+premiere methode: log transform la response
+
+simpler model --> higher and better degrees of freedom.
+
+if real U or inverse U think about quadratic (positive or negative). but if take x^2 you have to keep x as coeff.
+use function poly() to mean center the term
+
+NLLS fit predefined functions. provide starting "guesses", need to check model does not change if change starting values.
+
+
+#####################
+other models
+#####################
+zero-altered models usefull for data with many '0'
+
+#####################
+workflow
+#####################
+
+data quality
+visualize: 
+	distributions, 
+	colinearity, 
+	effects (adf), 
+	alternatives?
+analyses:
+	model quality (assumption & fit)
+	simplification & selection
+	
+

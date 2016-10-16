@@ -1,0 +1,18 @@
+{
+    "contents" : "library(ggplot2)\nlibrary(tidyr)\nlibrary(broom)\nlibrary(dplyr)\nlibrary(car)\nlibrary(GGally)\n\npups_data = (read.csv(\"data/WOLFPUPS.csv\"))\nsummary(pups_data)\n\n## 2016 year is weird\npups_data = pups_data %>% filter(YEAR != 2016)\n\npairs(pups_data)\npairs(pups_data %>% select(-YEAR))\nggpairs(pups_data %>% select(-YEAR))\n\nmod.1 = lm(PUPS~ADULTS+CALVES+WORMS+PERMITS, data=pups_data)\nsummary(mod.1)\n\npar(mfrow=c(2,2))\nplot(mod.1)\npar(mfrow=c(1,1))\n\nvif(mod.1)\n\nmod.2<-update(mod.1,~. - ADULTS)\nsummary(mod.2)\n\nvif(mod.2)\n\n# Note that we did not use the anova() command to compare MOD.1 and MOD.2. Why not? The order of operations here is extremely important. First, we found a model that was not troubled by collinearity, then we used likelihood ratio tests to find the minimal adequate model. Never use anova to decide whether to retain highly collinear variables, as their collinearity is more than enough reason to get rid of them, and is expected to artificially and inappropriately decrease model deviance.\n# anova(mod.1, mod.2)\n\nmod.3<-update(mod.2,~. - PERMITS)\nsummary(mod.3)\nvif(mod.3)\nanova(mod.2, mod.3)\n\nmod.4<-update(mod.3,~. - WORMS)\nmod.5<-update(mod.3,~. - CALVES)\n\nanova(mod.3, mod.4)\nanova(mod.3, mod.5)\n## RSS increase is too high and p-value<0.05 so we cannot reject the null hypothesis meaning that the term can be removed. \n# --> we keep the term\n\nmod.3s<-lm(PUPS~scale(CALVES)+scale(WORMS),data=pups_data)\nsummary(mod.3s)\n\navPlots(mod.3)\n\nconfint(mod.3s)\nsummary(mod.3s)\n\n",
+    "created" : 1448969680324.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1029777013",
+    "id" : "CDF9A530",
+    "lastKnownWriteTime" : 1448986095,
+    "path" : "~/Documents/formations/R - Ecosse/exercises/module4/exercise_mult_lm.R",
+    "project_path" : "exercise_mult_lm.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

@@ -1,0 +1,18 @@
+{
+    "contents" : "library(ggplot2)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(broom)\nlibrary(car)\nlibrary(boot)\nlibrary(data.table)\nlibrary(gridExtra)\nlibrary(GGally)\nlibrary(visreg)\n\ncairn = data.table(read.csv(\"data/CairngormNL.csv\"))\nprint(summary(cairn))\nprint(str(cairn))\n\nggpairs(cairn)\n\npar(mfrow=c(2,2))\nhist(cairn$REPID)\nhist(cairn$ELEVATION)\nhist(cairn$PLANT.HT)\nhist(cairn$TRANSMISSION)\npar(mfrow=c(1,1))\n\nggplot(data=cairn, aes(x=ELEVATION, y=TRANSMISSION, group=PLANT.HT)) + geom_boxplot() + theme_bw()\nggplot(data=cairn, aes(x=ELEVATION, y=TRANSMISSION, color=PLANT.HT)) + geom_point() + theme_bw()\n\npar(mfrow=c(2,3))\nlm.1 = lm(TRANSMISSION~ELEVATION*PLANT.HT, data=cairn)\nplot(lm.1)\nhist(lm.1$residuals)\nsummary(lm.1)\npar(mfrow=c(1,2))\nvisreg(lm.1)\n## crappy summary\n\n## try to remove interaction\nlm.1.simple = update(lm.1, ~. -ELEVATION:PLANT.HT)\nvisreg(lm.1.simple)\nanova(lm.1, lm.1.simple)\n### same AND simpler we keep\n\n\nmod.quad = lm(TRANSMISSION~PLANT.HT + poly(ELEVATION,2),data=cairn)\npar(mfrow=c(2,3))\nplot(mod.quad)\nhist(mod.quad$residuals)\nsummary(mod.quad)\nanova(lm.1.simple, mod.quad)\n\navPlots(mod.quad)\n\npar(mfrow=c(1,1))\nvisreg(mod.quad, xvar=\"ELEVATION\", by=\"PLANT.HT\", overlay=TRUE)\n# cairn$plant_scaled = round(cairn$PLANT.HT/10) + 1\n# mod.quad = lm(TRANSMISSION~plant_scaled + poly(ELEVATION,2),data=cairn)\n# visreg(mod.quad, xvar=\"ELEVATION\", by=\"plant_scaled\", overlay=TRUE)\n\n\n### predictions\nto_predict_ELEV = seq(600, 1200, 10)\nto_predict_PLANT = seq(0, 50, 1)\n\nto_predict = expand.grid(ELEVATION=to_predict_ELEV, PLANT.HT=to_predict_PLANT)\n\npredicted = predict(mod.quad, to_predict, int=\"c\")\ndf_pred = data.table(cbind(to_predict, predicted))\n\n# ggplot(data=cairn) + geom_point(aes(y=TRANSMISSION, x=ELEVATION, color=PLANT.HT)) + theme_bw() + geom_line(data=df_pred, aes(x=ELEVATION, y=fit, group=PLANT.HT), alpha=.15) + geom_line(data=df_pred[PLANT.HT == mean(df_pred$PLANT.HT),], aes(x=ELEVATION, y=fit, group=PLANT.HT), color=\"blue\", size=1.1) + scale_color_gradient(low=\"green\", high=\"purple\")\n\nggplot(data=cairn, aes(y=TRANSMISSION, x=ELEVATION, color=PLANT.HT)) + geom_point() + theme_bw() + stat_smooth(method = \"lm\", formula = y ~ x + I(x^2),se=FALSE) + geom_line(data=df_pred[PLANT.HT == median(df_pred$PLANT.HT),], aes(x=ELEVATION, y=fit, group=PLANT.HT), color=\"red\", size=1.1)\n",
+    "created" : 1449227819168.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1763433541",
+    "id" : "B51E2DFA",
+    "lastKnownWriteTime" : 1449231640,
+    "path" : "~/Documents/formations/R - Ecosse/exercises/module9/interaction.R",
+    "project_path" : "interaction.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

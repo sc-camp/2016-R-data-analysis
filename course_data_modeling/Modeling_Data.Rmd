@@ -1,0 +1,994 @@
+---
+title: "Modeling Data — linear, generalized, mixed and non-linear models"
+author: "Joseph Emeras"
+date: "December 2015"
+output: html_document
+---
+
+<!-- Load usefull libraries -->
+```{r, echo=FALSE, message=FALSE} 
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(broom)
+library(car)
+library(boot)
+library(data.table)
+library(gridExtra)
+library(GGally)
+library(visreg)
+```
+
+
+# General workflow for data analysis
+
+1. check data quality
+
+2. visualize: 
+
+	* distributions, 
+	
+	* colinearity, 
+	
+	* effects (adf), 
+	
+	* alternatives?
+
+3. analyse:
+
+	* model quality (assumption & fit)
+	
+	* simplification & selection
+	
+
+
+
+# Linear Regression
+**Goal**: Estimating a best-fit line describing the relationship between 2 or more variables.
+
+**Finding the best-fit line**: minimizing the unexplained variation (the residual variation), through minimizing the sums of squared deviations.
+
+**Assumptions of regression**:
+
+  * Variance of the dependent variable Y is constant for all values of the independent variable X
+
+  * Residual values must be normally distributed. Residuals in OLS (Ordinary Least Squares) is the vertical distance between the point and the regression line: Yobs - Ypred. We are looking for minimizing residuals.
+  
+**Residual diagnostics**:
+
+  * The residuals vs fits plot: should show no pattern between the residuals and the fitted values
+  
+  * The quantile-quantile (QQ) normal plot: if the theoretical and observed quantiles are similar, the dots should make a straight line on y=x
+  
+  * The scale-location plot: as for the fits vs. resids, should show no pattern
+  
+  * The Cook’s distance plot: illustrates data points with high influence on parameter estimates
+  
+  * F-ratio = explained/non-explained
+  
+# Univariate Linear Regression
+
+We will use a dataset of caterpillar growth fed different amounts of tannin in diet.
+First we import the data & see columns & structure.
+
+```{r}
+TANDAT<-read.csv("./courses/Mod_3_lm/tannin.csv")
+str(TANDAT)
+TANDAT
+
+# inspect histograms
+par(mfrow=c(1,2))
+hist(TANDAT$GROWTH)
+hist(TANDAT$TANNIN)
+par(mfrow=c(1,1))
+```
+
+Not pretty, but also not unusual. The sample here is very small -- let's wait until we see diagnostics before we draw conclusions about this distribution.
+
+
+```{r}
+# plot data of interest: growth as a function of tannin
+# the lwd argument changes the widths of all lines in the plots to twice the default
+# the cex command changes the point size (cex is for character expansion)
+plot(GROWTH~TANNIN,data=TANDAT,lwd=2,cex=1.5)
+# suggests a solid negative relationship -- use this to anticipate parameters 
+# could add a line here if you want, but not strictly necessary
+
+# based on this plot I predict an intercept value of around 12, and a slope of around -1.25 (= rise/run = -10/8)
+
+# build an initial model using lm
+MOD.1<-lm(GROWTH~TANNIN,data=TANDAT)
+
+# note that the new object has many components
+str(MOD.1)
+
+# before looking at the model, examine diagnostics!!!!
+
+par(mfrow=c(2,3))
+plot(MOD.1)
+# note the preceding command will call four plots at once
+# if you haven't changed the number of panels to plot using the par command, the R console will wait for you to hit enter between plotting each figure
+hist(MOD.1$residuals)
+par(mfrow=c(1,1))
+# everything looks OK -- maybe slight concern at influence of datapts 4 and 7, which I could investigate(see below)
+
+# examine the model 
+summary(MOD.1)
+# inspect residual quartiles, as well as summary stats
+
+
+
+# check to see if datapoint 7 has undue influence: rerun model without it)
+
+# OR perhaps more intuitively
+MOD.2<-update(MOD.1,data=TANDAT[-7,])
+
+
+summary(MOD.2)
+# both parameters have changed, but in my opinion the change is not dramatic.
+# in the absence of further justification for excluding (7), I would retain the first model
+
+MOD.3<-update(MOD.1,subset=(TANNIN!=9))
+summary(MOD.3)
+# as above, no dramatic change. One can conclude that neither of these points is unduly influencing the results
+
+
+# examine the first model again 
+summary(MOD.1)
+# parameters conform well to expectations 
+
+# interpretation on several levels
+
+# (1) IMO, the most important conclusion is that for every increase of 1 unit of dose of tannin, there is
+# a corresponding decrease of 1.22 units of growth
+ 
+# (2) In the studied sample of caterpillars, the dietary tannin level explained 81.6% of variation in growth (the mult. R-squared value)
+ 
+# (3) If you care about p-values, the whole model is significant, and both coefficients are significantly nonzero
+
+#  This means that we can reject the null model (in regression, this is usually a model with only an intercept, which explains why the p-value for the slope term is the same as that for the whole model)
+# We can also conclude that these data are unlikely if the "true" regression has a slope of zero
+# If you were describing these results in a MS, you might produce a table of coefficients, and/or also cite the stats in the text as follows: Increased dietary tannin levels caused significant decreases in caterpillar growth  (regression slope (±SE) = -1.217 (±0.219),N=9,t=-5.565,P=0.0008; see Figure 1).
+
+# Some people prefer to cite F-values, but note that this only works if the only term in the model is the one of interest; otherwise, the F-value won't be the same as that for the coefficient of interest. Also, because the F-value is associated with the whole model, and not the parameter, you can't really point out the parameter in the same parenthetical, which is why I prefer the example above. But for completeness, here's how you might cite the F:
+# Increased dietary tannin levels caused significant decreases in caterpillar growth (F(1,7DF)=30.97,P=0.0008; see Figure 1)  
+
+# if you want to see the ANOVA table, use one of the following:
+summary.aov(MOD.1)
+anova(MOD.1)
+# note how much less information rich ANOVA tables are compared to tables of coefficients
+
+
+# Create a sequence of new x values
+NEWXVARS <- seq(0,8,length=100)
+
+# Create a sequence of predicted y values and confidence intervals
+NEWYVARS <- predict(MOD.1,
+                    newdata=list(TANNIN=NEWXVARS),
+                    int="c")
+
+# Check the structure of your predictions
+str(NEWYVARS)
+
+##
+# Create a new data frame for your predictions:
+#  newx: your range of new x values
+#  newy: predicted y values for your range of x
+#  newupr: the upper 95% confidence intervals
+#  newlwr: the lower 95% confidence intervals
+##
+df.newvars <- data_frame(newx = NEWXVARS,
+                         newy = as.numeric(NEWYVARS[,"fit"]),
+                         newupr = as.numeric(NEWYVARS[,"upr"]),
+                         newlwr = as.numeric(NEWYVARS[,"lwr"]))
+
+ggplot(df.newvars, aes(x = newx, y = newy)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = newlwr, 
+                  ymax = newupr),
+              alpha = 0.25) +
+  geom_point(data = TANDAT, 
+             aes(x = TANNIN,
+                 y = GROWTH)) +
+  labs(x = "Tannin",
+       y = "Growth") +
+  theme_bw()
+
+```
+
+
+
+# Multivariate Linear Regression
+
+Workflow Summary:
+
+1. create the most complete model.
+
+2. detect for colinearity with vif(), remove the colinearity.
+
+3. use likelihood ratio tests to find the minimal adequate model, anova is one of them.
+
+4. get minimal model
+
+
+
+```{r}
+## First we read the data and print its characteristics
+data_path = "./courses/Mod_4_mult_regr/WOLFPUPS.csv"
+data_to_model = data.table(read.csv(data_path))
+
+print(summary(data_to_model))
+print(str(data_to_model))
+```
+
+Now we plot the histograms for each column that is not a factor to detect abnormal values.
+
+```{r, echo=FALSE}
+## Now some plotting to visualize data and look for abnormal values
+data_terms = names(data_to_model)
+data_terms_length = length(data_terms)
+par(mfrow=c(ceiling(data_terms_length/2), 2))
+# sapply(data_to_model, function(x) {if(!is.factor(x)) hist(x)})
+sapply(seq_len(ncol(data_to_model)), function(i) hist(data.frame(data_to_model)[,i], main = "", xlab=colnames(data_to_model)[i]))
+par(mfrow=c(1,1))
+```
+
+Sometimes the histogram cannot be used as it and we use a transform, eg. `sqrt()`, `log()`, `log10()` to see if it looks better. In this case it may be a sign that the model will use the tranform too.
+
+If we detect some data that is not contiguous with the others, it may be an outlier. 
+First observation is a lack of several years of data in the time serie. Year 2016 seems an outlier so we remove it.
+
+```{r}
+data_to_model = data_to_model %>% filter(YEAR != 2016)
+```
+
+We use some ggplot for scatterplots.
+We need to know which is the response, which are the predictors?
+
+```{r}
+RESPONSE=quote(data_terms[6])   # PUPS
+PREDICTOR1=quote(data_terms[3]) # CALVES
+PREDICTOR2=quote(data_terms[4]) # WORMS
+
+ggplot(data=data_to_model, aes_string(x = eval(PREDICTOR1), y = eval(RESPONSE), color = eval(PREDICTOR2))) + geom_point() + theme_bw()
+
+```
+
+We examine possible multicollinearity as well as pairwise relationships with `pairs()`.
+```{r} 
+pairs(data_to_model)
+```
+
+The `ggpairs()` function also helps providing scatterplot, densities and correlation values. We use these to detect potential colinearity.
+```{r}
+ggpairs(data_to_model)
+```
+
+It looks like `CALVES` and `ADULTS` are colinear, their relationship is a straight line.
+
+We build a maximal model but without interactions for the beginning. Then examine diagnostics.
+```{r}
+MOD.1<-lm(PUPS~ADULTS+CALVES+WORMS+PERMITS,data=data_to_model)
+par(mfrow=c(2,3))
+plot(MOD.1)
+hist(MOD.1$residuals)
+par(mfrow=c(1,1))
+
+## we save these types of plots for later.
+# avPlots(MOD.1)
+# visreg(MOD.1)
+```
+
+Q-Q plot is nice, Residuals vs Fitted show no particular pattern but could be better (it may have a diamond shape). Histogram of residuals is centered around 0 so seems ok. However we detect on the Residuals vs Leverage one point that has a strong influence (point 19).
+We can also take a look at the same diagnostics for the different transforms earlier mentioned but in this case the original model is not worse and is simpler so we keep it.
+
+Now we check for variance inflation using the `vif()` function from the `{car}` package. If `vif()` gives a score over 10, it means that there is probably multicolinearity. In case it is over 4-5 it may also be a symptom of multicolinearity. In this case we have to remove (at least) one of the terms.
+
+```{r}
+vif(MOD.1)
+```
+
+Here we have 2 values above 10: `ADULTS` and `CALVES`. They are thus colinear as we were expecting.
+We update the model getting rid of one of them. Then we verify that multicolinearity has disapeared. 
+
+```{r}
+MOD.2a<-update(MOD.1,~. - CALVES)
+
+# reexamine vifs
+vif(MOD.2a)
+
+```
+
+Note that we did not use the `anova()` command to compare `MOD.1` and `MOD.2`. Why not? The order of operations here is extremely important. First, we found a model that was not troubled by collinearity, then we used likelihood ratio tests (with the `anova()` function) to find the minimal adequate model. Never use anova to decide whether to retain highly collinear variables, as their collinearity is more than enough reason to get rid of them, and is expected to artificially and inappropriately decrease model deviance.
+
+We will update the model like this several times to find the minimal adequate model. Can we remove other terms?
+We assess the adequation of the model with `anova()`, we are looking for a simpler model that does not increase the RSS (residual sum of squares) too much. In this case, we keep the most simple model, then we compare both models in terms of information retrieval ratio with `AIC()`. The lower the better.
+
+**Warning** using anova between 2 models we look at RSS (residual sum of squares). If RSS not too high, ok we can prefer the simpler model.
+But anova used to compare **only** 2 *nested* models, i.e. only one term differs.
+
+```{r}
+MOD.2b<-update(MOD.1,~. - ADULTS)
+
+MOD.3<-update(MOD.2b,~. - PERMITS)
+
+# reexamine vifs
+vif(MOD.3)
+
+# compare both models
+anova(MOD.2b, MOD.3)
+
+AIC(MOD.2b)
+AIC(MOD.3)
+```
+
+We can display the coefficients and confidence intervals for the simplest adequate model:
+```{r}
+summary(MOD.3)
+confint(MOD.3)
+
+avPlots(MOD.3)
+# visreg(MOD.3, xvar="CALVES", by="WORMS", overlay=TRUE)
+```
+
+
+**Z-tranformation**: by calling `scale()` before the terms at the model creation we set them on the same scale and thus compare their relative importance. But be carefull to also look at `confint()` to not misinterpret the result.
+
+```{r}
+MOD.4std<-lm(PUPS~scale(CALVES)+scale(WORMS),data=data_to_model)
+summary(MOD.4std)
+# According to this summary, WORMS has a slightly more important effect than CALVES on PUPS, but the absolute values of confidence intervals for the two coefficients overlap. Can use the confint() command to be sure
+confint(MOD.4std)
+
+```
+
+
+Now that we have found our model we will use the `predict()` function to generate predictions and plot them.
+
+```{r}
+NEWWORMS<-seq(0.01,1.22,0.01)
+
+# the next line tells me how many rows are in NEWWORMS
+length(NEWWORMS)
+# the next line will create a vector with the same number of rows, but all set to the mean value for CALVES
+MEANCALVES<-rep(mean(data_to_model$CALVES),122)
+
+# now use predict to generate y-variables
+# note that the newdata statement below must include a reference for ALL predictors in the original model
+# by setting the CALVES column to be a series of means, we're effectively controlling for the influence of CALVES, and only getting the partial effect of WORMS
+NEWYUSINGWORMS<-predict(MOD.3,newdata=list(WORMS=NEWWORMS,CALVES=MEANCALVES),int="c")
+
+# plot the original data
+plot(data_to_model$WORMS,data_to_model$PUPS,xlab="Infection score",ylab="Pups born",ylim=c(0,18))
+matlines(NEWWORMS,NEWYUSINGWORMS,lty=c(1,2,2),col="black")
+# NB this looks like a somewhat "shallow" fit, but this is because some of the trend is caused by the correlated variable
+# The "advantage" of this approach is that the data are readily interpretable in raw units
+
+# like vif(), the avPlots function is from the {car} package, so remember to load it if necessary
+# generate avPlots to examine partial effects
+avPlots(MOD.3)
+
+# note that the pattern for scaled predictors is the same, but the x-axis units are different
+
+# make publication-quality plots
+avPlots(MOD.3,terms="WORMS",xlab="Residual infection score",ylab="Residual pups born",xlim=c(-0.6,0.6),ylim=c(-5,5))
+
+avPlots(MOD.3,terms="CALVES",xlab="Residual calves born",ylab="Residual pups born",xlim=c(-60,60),ylim=c(-4,6))
+
+# to do this by hand, would need resids from two different models
+RESWORMSONOTHERPREDICTORS<-lm(WORMS~CALVES,data=data_to_model)
+RESPUPSNOWORMS<-lm(PUPS~CALVES,data=data_to_model)
+plot(RESWORMSONOTHERPREDICTORS$residuals,RESPUPSNOWORMS$residuals,xlab="Residual infection score",ylab="Residual pups born",xlim=c(-0.6,0.6),ylim=c(-5,5))
+abline(lm(RESPUPSNOWORMS$residuals~RESWORMSONOTHERPREDICTORS$residuals))
+
+# this plot should look just like the one generated with avPlots
+# you could even add confidence intervals by using a predict command on the linear model nested within line 219 
+
+
+# INTERPRETATION
+
+# remember that because of strong correlation between CALVES and ADULTS, we can't say that the effect of CALVES in this model is actually due to CALVES or ADULTS. In the discussion, we would need to attend to the implications of both possibilities, even though we're only reporting a parameter estimate for one of them.
+
+# Sample Results text:
+
+# My minimal adequate model of wolf recruitment rates included a significant negative effect for infection status (Slope B = -6.77; Standardized regression coefficient Beta = -1.63; t = -3.68,P= 0.0007; see Figure 1A) and a positive effect for the number of moose calves (B = 0.044, Beta = 1.26; t = 2.83; P = 0.0071; see Figure 1B). Recall that moose calf numbers were collinear with adult population size, so I cannot distinguish between the effects of adults or calves on wolf recruitment.
+
+```
+
+# ANCOVA: factorial and continuous predictors
+
+**Interactions in model terms**. Does the effect of one predictor depends on another one?
+To answer this question we use **factorial predictors**. We group the observations by classes (we use the `factor()` command).
+
+*example*: we have 2 groups corresponding to 2 observation sites. Once we have the model: 
+The intercept is the mean of group 1 and the slope is the difference between mean of group 1 and mean of group 2.
+In this case the null hypothesis is: there is no difference between the 2 groups.
+
+**AIC**. Anova works for nested models. If the models are not, we need to use `AIC()`. This is because randomness increase the noise and thus may increase likelihood. AIC, penalizes the model complexity (number of coefficients). For AIC, the lower is the better. `LogLik()` is also possible but is not penalized by noise from too many parameters.
+
+**Warning**: testing for `vif()` in a model with interactions does not make sense. There is obviously a colinearity in an interaction. Thus we test and remove the colinearity **before** adding the interaction to the model.
+
+Technically in R we test the interaction with a *, equivalent to a + and a : (the interaction itself).
+
+When simplifying a model with interaction, it has to be by trying to removing the interaction itself first. It is logical because all the terms in the interaction have to be in the model.
+
+When the slopes are different in the model, this means that there is actually an interaction. If not really, maybe the interaction should be removed. Thus looking at the slope, the slope deviation (and their respective std) we should be able to tell if they are parallel (ther is in fact no interaction and we remove it) or not.
+
+```{r}
+
+data_comp = data.table(read.csv("./courses/Mod_5_ancova/compensationo.csv"))
+print(summary(data_comp))
+
+ggplot(data=data_comp, aes(x=ROOT, y=FRUIT, color=GRAZING)) + theme_bw() + geom_point() 
+ggplot(data=data_comp, aes(x=ROOT, y=FRUIT, color=GRAZING)) + theme_bw() + geom_boxplot() 
+
+ggplot(data=data_comp, aes(x=ROOT, y=FRUIT, color=GRAZING)) + theme_bw() + geom_point() + geom_smooth(method="lm", fullrange = TRUE, se = FALSE) + expand_limits(x = 0, y = 0)
+
+lm_plus = lm(FRUIT~ROOT+GRAZING, data=data_comp)
+summary(lm_plus)
+vif(lm_plus)
+par(mfrow=c(2,2))
+plot(lm_plus)
+par(mfrow=c(1,1))
+
+lm_interaction = lm(FRUIT~ROOT:GRAZING, data=data_comp)
+summary(lm_interaction)
+# vif(lm_interaction)
+par(mfrow=c(2,2))
+plot(lm_interaction)
+par(mfrow=c(1,1))
+
+lm_all = lm(FRUIT~ROOT*GRAZING, data=data_comp)
+lm_all = lm(FRUIT~ROOT+GRAZING+ROOT:GRAZING, data=data_comp)
+
+
+summary(lm_all)
+vif(lm_all)
+par(mfrow=c(2,2))
+plot(lm_all)
+par(mfrow=c(1,1))
+
+## vif shows that lm_all has more than 10 for GRAZING and  ROOT:GRAZING 
+# we redo the model without GRAZING
+lm_simple = lm(FRUIT~ROOT, data=data_comp)
+summary(lm_simple)
+# vif(lm_simple)
+par(mfrow=c(2,2))
+plot(lm_simple)
+par(mfrow=c(1,1))
+
+anova(lm_plus, update(lm_plus, ~. - GRAZING))
+anova(lm_plus, lm_simple)
+
+logLik(lm_simple)
+logLik(lm_plus) ## best logLik
+logLik(lm_interaction)
+logLik(lm_all) ## best logLik
+
+AIC(lm_simple)
+AIC(lm_plus) ## best AIC
+AIC(lm_interaction)
+AIC(lm_all)
+
+coef(summary(lm_plus))
+
+
+# > summary(lm_all)
+# 
+# Call:
+#   lm(formula = FRUIT ~ ROOT * GRAZING, data = data_comp)
+# 
+# Residuals:
+#   Min       1Q   Median       3Q      Max 
+# -17.3177  -2.8320   0.1247   3.8511  17.1313 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)          -125.173     12.811  -9.771 1.15e-11 ***
+#   ROOT                   23.240      1.531  15.182  < 2e-16 ***
+#   GRAZINGUngrazed        30.806     16.842   1.829   0.0757 .  
+# ROOT:GRAZINGUngrazed    0.756      2.354   0.321   0.7500    
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 6.831 on 36 degrees of freedom
+# Multiple R-squared:  0.9293,	Adjusted R-squared:  0.9234 
+# F-statistic: 157.6 on 3 and 36 DF,  p-value: < 2.2e-16
+# 
+# > summary(lm_plus)
+# 
+# Call:
+#   lm(formula = FRUIT ~ ROOT + GRAZING, data = data_comp)
+# 
+# Residuals:
+#   Min       1Q   Median       3Q      Max 
+# -17.1920  -2.8224   0.3223   3.9144  17.3290 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)     -127.829      9.664  -13.23 1.35e-15 ***
+#   ROOT              23.560      1.149   20.51  < 2e-16 ***
+#   GRAZINGUngrazed   36.103      3.357   10.75 6.11e-13 ***
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 6.747 on 37 degrees of freedom
+# Multiple R-squared:  0.9291,	Adjusted R-squared:  0.9252 
+# F-statistic: 242.3 on 2 and 37 DF,  p-value: < 2.2e-16
+
+
+
+### slope deviation is 0.756 with 2.35 std so they are the same....
+## thus we get rid of interaction and keep lm_simple
+## slope is 23.56, intercept difference for ungrazed is +36.103
+
+
+data_to_predict = copy(data_comp)
+data_to_predict[,FRUIT:=NULL]
+d1 = data.frame(predicted=predict(lm_plus, data_to_predict))
+d2 = data.frame(observed=data_comp$FRUIT)
+
+d1$sample = as.numeric(rownames(d1))
+d2$sample = as.numeric(rownames(d2))
+
+dd = merge(d1, d2)
+dd_g = gather(dd, type, value, predicted:observed)
+
+ggplot(data=dd_g, aes(x=sample, y=value, fill=type)) + theme_bw() + geom_bar(stat="identity", position="dodge")
+
+## T-test will be used to reject the null hypothesis: the samples come from the same group.
+## we use the paired = TRUE to say that the order is important
+t.test(d1$predict, d2$observed, paired = TRUE)
+
+
+
+
+NEWGRAZED<-expand.grid(GRAZING="Grazed",ROOT=seq(4,11,0.1))
+NEWUNGRAZED<-expand.grid(GRAZING="Ungrazed",ROOT=seq(4,11,0.1))
+# have a look at what this produces!
+head(NEWGRAZED)
+
+
+# the predicted y values come by using the predict command and specifying which vector to substitute for 
+# the x variables in the original regression. Note that here we need to tell the predict command where to find 
+# the Grazing level as well as the Root measure
+# The argument int="c" tells matlines to draw 95% confidence intervals
+YVGRAZED<-predict(lm_plus,list(GRAZING=NEWGRAZED$GRAZING,ROOT=NEWGRAZED$ROOT),int="c")
+YVUNGRAZED<-predict(lm_plus,list(GRAZING=NEWUNGRAZED$GRAZING,ROOT=NEWUNGRAZED$ROOT),int="c")
+
+
+df_graze_pred <- data_frame(GRAZING = factor(c(rep("Grazing", 
+                                                   times = length(NEWGRAZED$GRAZING)), 
+                                               rep("Ungrazed",
+                                                   times = length(NEWUNGRAZED$GRAZING)))),
+                            ROOT = c(NEWGRAZED$ROOT, NEWUNGRAZED$ROOT),
+                            FRUIT_PRED = as.numeric(c(YVGRAZED[,"fit"], YVUNGRAZED[,"fit"])),
+                            FRUIT_LWR = as.numeric(c(YVGRAZED[,"lwr"], YVUNGRAZED[,"lwr"])),
+                            FRUIT_UPR = as.numeric(c(YVGRAZED[,"upr"], YVUNGRAZED[,"upr"])))
+
+##
+# Create ggplot from predicted data,
+#  then plot points over the top of this
+##
+ggplot(df_graze_pred, aes(x = ROOT, y = FRUIT_PRED,
+                          group = GRAZING)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = FRUIT_LWR,
+                  ymax = FRUIT_UPR),
+              alpha = 0.1) +
+  geom_point(data = data_comp, aes(x = ROOT, y = FRUIT,
+                              colour = GRAZING),
+             size = 4, alpha = 0.7) +
+  labs(x = "Initial root diameter",
+       y = "Seed production") +
+  theme_classic()
+
+
+
+```
+
+
+# Generalized Linear Models
+
+Why generalizing the linear model? If response is discrete or error non normal.
+
+* Non-constant / non-homogeneous variance  
+* Non-normal error distribution  
+
+Interesting in the case of “Difficult” response variables:
+
+* May not have constant variance  
+* Errors not normally distributed  
+* Logan text covers four situations:  
+  * Count data (no proportions)  
+  * Proportion data  
+  * Binary responses  
+  * “Time-to-event” data  
+
+Four common error structures: 
+
+* Poisson errors, for count data  
+* Binomial errors, for proportion data  (0 or 1 -- aka logistic regression)
+* Exponential errors, for time to event  
+* Gamma errors, for data with constant CV (covariates) 
+
+
+Overdispersion and underdispersion:
+
+* residual deviance > 2 * degrees of freedom: overdispersion  
+* residual deviance > 0.5 * degrees of freedom: underdispersion  
+
+
+**Warning**: If the model uses log, logit, power or other kind of transformation we need to get the predictions in link space and not respoce space to get correct SE. Then when plotting we transform back to response space.
+
+```{r}
+data_species = data.table(read.csv("./courses/Mod_6_generalized_mods/SPECIES.csv"))
+print(summary(data_species))
+print(str(data_species))
+
+ggpairs(data_species)
+
+ggplot(data=data_species, aes(x=RICHNESS)) + theme_bw() + geom_bar(binwidth=3)
+ggplot(data=data_species, aes(x=BIOMASS)) + theme_bw() + geom_bar(binwidth=1)
+
+## RICHNESS is discrete. Bounded to 0. looks like poisson distribution.
+## BIOMASS is continuous. Bounded to 0
+
+p1 = ggplot(data_species, aes(x=BIOMASS, y=RICHNESS, color=PH)) + theme_bw() + geom_point() + geom_smooth(method="lm")
+p2 = ggplot(data_species) + theme_bw() + geom_point(aes(x=BIOMASS, y=RICHNESS))
+p3 = ggplot(data_species) + theme_bw() + geom_point(aes(x=PH, y=RICHNESS))
+
+grid.arrange(p1, p2, p3, ncol=3)
+
+p_log = ggplot(data_species, aes(x=BIOMASS, y=log(RICHNESS), color=PH)) + theme_bw() + geom_point() + geom_smooth(method="lm", se=FALSE)
+print(p_log)
+## if we use log space we can see that there is an interaction.
+
+
+MOD.1<-glm(RICHNESS~BIOMASS*PH,data=data_species,family=poisson)
+summary(MOD.1)
+## Residual deviance:  83.201  on 84  degrees of freedom so we are good.
+
+### try other stuff to see ho it is going
+summary(glm(RICHNESS~BIOMASS+PH,data=data_species,family=poisson))  ## might be ok
+summary(glm(RICHNESS~BIOMASS*PH,data=data_species,family=gaussian)) ## overdispersion
+summary(glm(RICHNESS~BIOMASS+PH,data=data_species,family=gaussian)) ## overdispersion
+
+par(mfrow=c(2,2))
+plot(MOD.1)
+## good enough but we prefer the next one:
+glm.diag.plots(MOD.1)
+# can interact with the plots to identify points (for example those with high influence or leverage) by specifying iden=TRUE inside call for glm.diag.plots
+# in this case, record 18 may have high influence
+# otherwise this looks pretty good
+
+## try a model simplification
+MOD.2 = update(MOD.1, ~. - BIOMASS:PH)
+summary(MOD.2)
+
+## analyze variance difference with X2 because it is a glm: no analytic solution.
+# when doing model simp with glm, must specify that you want a chi-squared rather than an F-test or you won't get a p-value
+anova(MOD.1, MOD.2, test="Chi")
+## p-value is 0.0003288 so we have to keep the first model with the interaction
+
+
+# could check whether PHmid and high are really different by lumping them and doing a Chi-squared likelihood ratio test
+NEWPH<-factor(data_species$PH)
+# generates a new object to manipulate, so that we don't accidentally mess up the original data
+# have a look at it
+levels(NEWPH)
+
+# now recode the new factor so that you combine similar treatment levels
+levels(NEWPH)[c(1,2)]<-"mid&high"
+levels(NEWPH)[c(3)]<-"low"
+levels(NEWPH)
+
+MOD.1.2LEVS<-glm(RICHNESS~BIOMASS*NEWPH,data=data_species,family=poisson)
+anova(MOD.1,MOD.1.2LEVS,test="Chi")
+# so must retain 3 levels
+
+data_to_predict = copy(data_species)
+data_to_predict[,RICHNESS:=NULL]
+
+## glm so we use link and not response to get correct SE.
+data_to_predict$PRED_RICHNESS = predict(MOD.1, data_to_predict, type="link", se.fit = TRUE)$fit
+data_to_predict$PRED_SE = predict(MOD.1, data_to_predict, type="link", se.fit = TRUE)$se.fit
+
+full_data = merge(data_species, data_to_predict, by=c("PH", "BIOMASS"))
+
+## Get a 'tidy' version of the model coefficients
+tidy(MOD.1)
+
+## Get a 'tidy' version of the model summary statistics
+glance(MOD.1)
+
+## 'Augment' adds columns to the original data set
+augment(MOD.1)
+
+
+p_final = ggplot(full_data) + theme_bw() + geom_line(aes(x=BIOMASS, y=exp(PRED_RICHNESS), color=PH)) + geom_point(aes(x=BIOMASS, y=RICHNESS, color=PH)) + ylab("RICHNESS") + geom_ribbon(aes(x=BIOMASS, ymin = exp(PRED_RICHNESS-1.96*PRED_SE), ymax = exp(PRED_RICHNESS+1.96*PRED_SE), group=PH, fill=PH), alpha=.3)
+
+print(p_final)
+
+visreg(MOD.1, xvar = "BIOMASS", scale = "response", rug=FALSE, by="PH", overlay=TRUE)
+
+
+```
+
+# Usefull Tools
+
+**Augment**
+
+```{r}
+
+comp = data.table(read.csv("./courses/Mod_7_predict/compensationo.csv"))
+print(summary(comp))
+print(str(comp))
+ggpairs(comp)
+
+hist(comp$ROOT)
+hist(comp$FRUIT)
+# hist(comp$GRAZING)
+
+## there was no interesting interaction in the model, we rebuild it.
+comp_mod = lm(FRUIT~ROOT+GRAZING, data=comp)
+tidy(comp_mod)
+
+### std ggplot
+comp_mod %>%
+  augment() %>%
+  ggplot(data = .,
+         aes(x = ROOT,
+             y = FRUIT,
+             colour = GRAZING,
+             fill = GRAZING)) +
+  geom_point() +                  # points from original data frame
+  geom_line(aes(y = .fitted)) +   # line from model fit
+  geom_ribbon(aes(ymin = .fitted - (1.96 * .se.fit),
+                  ymax = .fitted + (1.96 * .se.fit)),   # CIs from model fit
+              alpha = 0.3,
+              linetype = 0) +
+  theme_bw()
+
+## OR:
+visreg(comp_mod) # by default plot is fixed with the median but can be changed with cond=
+median(comp$ROOT)
+visreg(comp_mod, xvar = "GRAZING", cond=list(ROOT=10))
+
+visreg(comp_mod, xvar = "ROOT", by="GRAZING") 
+
+```
+
+**visreg**
+
+```{r}
+isle = data.table(read.csv("./courses/Mod_7_predict/isolation.csv"))
+print(summary(isle))
+print(str(isle))
+ggpairs(isle)
+
+hist(isle$ISOLATION)
+hist(isle$INCIDENCE) ## yes or no. it is a binomial distribution
+hist(isle$AREA)
+
+
+anova(glm(INCIDENCE~AREA*ISOLATION,data=isle,binomial), glm(INCIDENCE~AREA+ISOLATION,data=isle,binomial), test="Chi")
+## interaction is not present
+
+mod_isol<-glm(INCIDENCE~AREA+ISOLATION,data=isle,binomial)
+tidy(mod_isol)
+augment(mod_isol)
+
+visreg(mod_isol)
+
+visreg(mod_isol, xvar = "ISOLATION") ## displays in logit scale
+visreg(mod_isol, xvar = "AREA")
+
+visreg(mod_isol, xvar = "ISOLATION", scale = "response", rug=FALSE, ylab="Incidence",xlab="Isolation")
+visreg(mod_isol, xvar = "AREA", scale = "response", rug=FALSE)
+```
+
+
+# Non-linear Models
+
+```{r}
+decay = data.table(read.csv("./courses/Mod_9_nonlinear_mods/decay.csv"))
+print(summary(decay))
+print(str(decay))
+
+ggpairs(decay)
+
+hist(decay$TIME)
+hist(decay$MASSLEFT)
+ggplot(data=decay, aes(x=TIME, y=MASSLEFT)) + geom_boxplot() + theme_bw()
+ggplot(data=decay, aes(x=TIME, y=MASSLEFT)) + geom_point() + theme_bw()
+
+ggplot(data=decay, aes(x=TIME, y=log(MASSLEFT))) + geom_point() + theme_bw()
+ggplot(data=decay, aes(x=TIME, y=log(MASSLEFT))) + geom_point() + theme_bw() + geom_smooth(method="lm")
+
+par(mfrow=c(2,2))
+
+lm.1 = lm(MASSLEFT~TIME, data=decay)
+plot(lm.1)
+## crappy
+
+lm.2 = lm(log(MASSLEFT)~TIME, data=decay)
+plot(lm.2)
+## better
+
+par(mfrow=c(1,1))
+
+summary(lm.2)
+visreg(lm.2)
+
+to_predict = seq(0, 30, .1)
+pred_MASS = predict(lm.2, list(TIME=to_predict), int="c")
+
+df_pred = cbind(data.frame(TIME=to_predict), exp(pred_MASS))
+
+
+## now plot, do not forget to expo the predictions
+plot(MASSLEFT~TIME, data=decay)
+matlines(to_predict,exp(pred_MASS),lty=c(1,2,2),col="black")
+
+## OR
+ggplot(data=decay) + geom_point(aes(y=MASSLEFT, x=TIME)) + theme_bw() + geom_line(data=df_pred, aes(x=TIME, y=fit), color="blue") + geom_ribbon(data=df_pred, aes(x=TIME, ymin=lwr, ymax=upr), alpha=.2)
+
+
+```
+
+
+```{r}
+cairn = data.table(read.csv("./courses/Mod_9_nonlinear_mods/CairngormNL.csv"))
+print(summary(cairn))
+print(str(cairn))
+
+ggpairs(cairn)
+
+par(mfrow=c(2,2))
+hist(cairn$REPID)
+hist(cairn$ELEVATION)
+hist(cairn$PLANT.HT)
+hist(cairn$TRANSMISSION)
+par(mfrow=c(1,1))
+
+ggplot(data=cairn, aes(x=ELEVATION, y=TRANSMISSION, group=PLANT.HT)) + geom_boxplot() + theme_bw()
+ggplot(data=cairn, aes(x=ELEVATION, y=TRANSMISSION, color=PLANT.HT)) + geom_point() + theme_bw()
+
+par(mfrow=c(2,3))
+lm.1 = lm(TRANSMISSION~ELEVATION*PLANT.HT, data=cairn)
+plot(lm.1)
+hist(lm.1$residuals)
+summary(lm.1)
+par(mfrow=c(1,2))
+visreg(lm.1)
+## crappy summary
+
+## try to remove interaction
+lm.1.simple = update(lm.1, ~. -ELEVATION:PLANT.HT)
+visreg(lm.1.simple)
+anova(lm.1, lm.1.simple)
+### same AND simpler we keep
+
+
+mod.quad = lm(TRANSMISSION~PLANT.HT + poly(ELEVATION,2),data=cairn)
+par(mfrow=c(2,3))
+plot(mod.quad)
+hist(mod.quad$residuals)
+summary(mod.quad)
+anova(lm.1.simple, mod.quad)
+
+avPlots(mod.quad)
+
+par(mfrow=c(1,1))
+visreg(mod.quad, xvar="ELEVATION", by="PLANT.HT", overlay=TRUE)
+# cairn$plant_scaled = round(cairn$PLANT.HT/10) + 1
+# mod.quad = lm(TRANSMISSION~plant_scaled + poly(ELEVATION,2),data=cairn)
+# visreg(mod.quad, xvar="ELEVATION", by="plant_scaled", overlay=TRUE)
+
+
+### predictions
+to_predict_ELEV = seq(600, 1200, 10)
+to_predict_PLANT = seq(0, 50, 1)
+
+to_predict = expand.grid(ELEVATION=to_predict_ELEV, PLANT.HT=to_predict_PLANT)
+
+predicted = predict(mod.quad, to_predict, int="c")
+df_pred = data.table(cbind(to_predict, predicted))
+
+# ggplot(data=cairn) + geom_point(aes(y=TRANSMISSION, x=ELEVATION, color=PLANT.HT)) + theme_bw() + geom_line(data=df_pred, aes(x=ELEVATION, y=fit, group=PLANT.HT), alpha=.15) + geom_line(data=df_pred[PLANT.HT == mean(df_pred$PLANT.HT),], aes(x=ELEVATION, y=fit, group=PLANT.HT), color="blue", size=1.1) + scale_color_gradient(low="green", high="purple")
+
+ggplot(data=cairn, aes(y=TRANSMISSION, x=ELEVATION, color=PLANT.HT)) + geom_point() + theme_bw() + stat_smooth(method = "lm", formula = y ~ x + I(x^2),se=FALSE) + geom_line(data=df_pred[PLANT.HT == median(df_pred$PLANT.HT),], aes(x=ELEVATION, y=fit, group=PLANT.HT), color="red", size=1.1)
+```
+
+
+```{r}
+deers = data.table(read.csv("./courses/Mod_9_nonlinear_mods/jaws.csv"))
+print(summary(deers))
+print(str(deers))
+
+ggpairs(deers)
+
+hist(deers$AGE)
+hist(deers$BONE)
+ggplot(data=deers, aes(x=AGE, y=BONE)) + geom_boxplot() + theme_bw()
+ggplot(data=deers, aes(x=AGE, y=BONE)) + geom_point() + theme_bw()
+
+ggplot(data=deers, aes(x=AGE, y=log(BONE))) + geom_point() + theme_bw()
+## it is decidely not a logtransform :-)
+
+par(mfrow=c(2,3))
+lm.1 = lm(BONE~AGE, data=deers)
+plot(lm.1)
+hist(lm.1$residuals)
+## crappy
+
+mod.quad = lm(BONE~poly(AGE,2),data=deers)
+plot(mod.quad)
+hist(mod.quad$residuals)
+summary(mod.quad)
+## a bit better, residuals are more homogeneous but still skewed.
+
+## let's compare the models
+anova(lm.1, mod.quad)
+AIC(lm.1)
+AIC(mod.quad)
+## better AIC and RSS for quadatric model
+
+
+to_predict = seq(0, 55, .5)
+predicted = predict(mod.quad, list(AGE=to_predict), int="c")
+df_pred = cbind(data.frame(AGE=to_predict), predicted)
+
+ggplot(data=deers) + geom_point(aes(y=BONE, x=AGE)) + theme_bw() + geom_line(data=df_pred, aes(x=AGE, y=fit), color="blue") + geom_ribbon(data=df_pred, aes(x=AGE, ymin=lwr, ymax=upr), alpha=.2)
+## FU***K the fit decreases after age...
+
+
+### we will do a Nonlinear least squares regression
+# we might like to use a different function that better approximates how growth is known to work: the asymptotic exponential function:
+# 𝑦 = 𝑎 − 𝑏 ∗ 𝑒!!∗!
+
+## but we need to guess the starting points
+
+# In our case, a represents the asymptotic value of the function, which we can guess is around 120 by consulting a scatterplot
+
+# We can deduce a starting value for b by setting age to zero, in which case the value of b is derived by rearranging the equation b = a – intercept. If the intercept is around 10, then we can guess that b is around 110.
+
+# To guess parameter c, we must inspect the plot at the steepest part of the curve (in these data, when AGE is around 5, and bone is about 40). We can guess the value for c by rearranging the equation again given the values of a and b specified: c = -log ((a – y)/b)/x. When AGE is 5, BONE is 40 or so, and therefore
+# c = -log ((120 – 40)/110)/5 = 0.063. A bit painful, but we now have three starting values. Use them to build a NLS model.
+
+starting_points = list(a=120,b=110,c=0.063)
+MOD.ASYMP<-nls(BONE~a-b*exp(-c*AGE), data=deers, start=starting_points)
+
+## or use the auto function but still need to check for init param sensitivity
+MOD.ASYMP.SS<-nls(BONE~SSasymp(AGE,a,b,c),data=deers)
+
+library(nlstools)
+plot(MOD.ASYMP)
+plot(nlsResiduals(MOD.ASYMP))
+
+plot(MOD.ASYMP.SS)
+plot(nlsResiduals(MOD.ASYMP.SS))
+
+summary(MOD.ASYMP)
+summary(MOD.ASYMP.SS)
+
+anova(MOD.ASYMP, MOD.ASYMP.SS)
+## same RSS but coeff are differents
+
+### there is a problem with coefficients
+MOD.ASYMP.2<-nls(BONE~a*(1-exp(-c*AGE)), data=deers,start=list(a=120,c=0.064))
+plot(nlsResiduals(MOD.ASYMP.2))
+
+anova(MOD.ASYMP, MOD.ASYMP.2)
+## same but simpler
+
+## let's plot
+predicted = predict(MOD.ASYMP.2, list(AGE=to_predict)) # we cannot get confint
+df_pred = cbind(data.frame(AGE=to_predict), predicted)
+
+ggplot(data=deers) + geom_point(aes(y=BONE, x=AGE)) + theme_bw() + geom_line(data=df_pred, aes(x=AGE, y=predicted), color="blue") 
+
+```
+
+

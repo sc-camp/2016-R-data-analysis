@@ -1,0 +1,18 @@
+{
+    "contents" : "library(ggplot2)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(broom)\n\ndata = read.csv(\"data/Cairngorm2012.csv\")\nnames(data)\nsummary(data)\nggplot(data=data) + theme_bw() + geom_histogram(aes(x=ELEVATION), binwidth=25)\nggplot(data=data) + theme_bw() + geom_histogram(aes(x=AIR.TEMP.CORR), binwidth=1)\nggplot(data=data) + theme_bw() + geom_histogram(aes(x=SOIL.TEMP.CORR), binwidth=1)\n\n\ndata_clean = data[-which(data$ELEVATION > 9000),]\n\n\ndata_new = gather(data_clean, Prov, TEMPERATURE, AIR.TEMP.CORR:SOIL.TEMP.CORR) %>% separate(Prov, into=c(\"V1\",\"V2\", \"V3\")) %>% select(-c(V2, V3)) %>% rename(temp = TEMPERATURE, elev = ELEVATION, prov = V1)\n\nggplot(data=data_new, aes(x=temp, y=elev)) + theme_bw() + geom_boxplot() + facet_wrap(~prov, scales=\"free\")\n\nggplot(data=data_new, aes(x=temp, y=elev, color=prov)) + theme_bw() + geom_point() + geom_smooth(method=\"lm\")\n\n\nMOD.air = lm(temp~elev, data=data_new[which(data_new$prov == \"AIR\"),])\nMOD.soil = lm(temp~elev, data=data_new[which(data_new$prov == \"SOIL\"),])\n\npar(mfrow=c(2,2))\nplot(MOD.air)\npar(mfrow=c(1,1))\n\npar(mfrow=c(2,2))\nplot(MOD.soil)\npar(mfrow=c(1,1))\n\n\n\n\n",
+    "created" : 1448964685073.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1074107174",
+    "id" : "D1EACC92",
+    "lastKnownWriteTime" : 1448969319,
+    "path" : "~/Documents/formations/R - Ecosse/exercises/module3/cairngorm.R",
+    "project_path" : "cairngorm.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

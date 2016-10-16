@@ -1,0 +1,17 @@
+{
+    "contents" : "\nlibrary(ggplot2)\nlibrary(dplyr)\n\n\n#### Species ####\n\nSPECIES<-read.csv(\"species.csv\")\n\nSPECIES$PH = factor(SPECIES$PH,levels(SPECIES$PH)[c(\"low\",\"mid\",\"high\")])\n\nMOD.1<-glm(RICHNESS~BIOMASS*PH,data=SPECIES,family=poisson)\n\nsummary(MOD.1)\n\ndf_sp_pred <- data_frame(BIOMASS = rep(seq(0,10,length=100), times = 3),\n                         PH = rep(c(\"low\", \"mid\", \"high\"), each = 100))\n\nhead(df_sp_pred)\ntail(df_sp_pred)\n\nYVH <- predict(MOD.1,list(PH=df_sp_pred$PH,\n                          BIOMASS=df_sp_pred$BIOMASS),\n               type=\"link\",\n               se.fit=TRUE)\n\ndf_sp_pred <- cbind(df_sp_pred,\n                    YVH)\n\nggplot(df_sp_pred, aes(x = BIOMASS, y = exp(fit),\n                       group = PH)) +\n  geom_line(aes(colour = PH)) +\n  geom_ribbon(aes(ymin = exp(fit - 1.96*se.fit),\n                  ymax = exp(fit + 1.96*se.fit)),\n              alpha = 0.2) +\n  geom_point(data = SPECIES, aes(x = BIOMASS,\n                                 y = RICHNESS,\n                                 colour = PH)) +\n  labs(x = \"Biomass\",\n       y = \"Species richness\") +\n  theme_classic()\n\n\n\n\n",
+    "created" : 1449160702254.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1224597433",
+    "id" : "995125FB",
+    "lastKnownWriteTime" : 1449103824,
+    "path" : "~/Documents/formations/R - Ecosse/courses/Updates/AdvInR_GLM_ggplot.R",
+    "project_path" : null,
+    "properties" : {
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

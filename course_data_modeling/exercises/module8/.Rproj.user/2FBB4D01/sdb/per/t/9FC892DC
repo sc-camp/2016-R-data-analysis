@@ -1,0 +1,18 @@
+{
+    "contents" : "library(ggplot2)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(broom)\nlibrary(car)\nlibrary(boot)\nlibrary(data.table)\nlibrary(gridExtra)\nlibrary(GGally)\nlibrary(visreg)\n\ngrouse = data.table(read.csv(\"data/grouse_shooting_mod.csv\"))\nprint(summary(grouse))\nprint(str(grouse))\n\nggpairs(grouse)\n\nhist(grouse$nr_shot)\nhist(grouse$totalcount)\nhist(grouse$km2)\nhist(grouse$prev)\n\n# The data are currently not yet ready for analysis, because the number of birds shot is not yet standardized by the size of the sampling location\n\ngrouse$shot_per_km2 = grouse$nr_shot/grouse$km2\n\n# You will want to log-transform both this newly generated variable and the predictor for the number of birds estimated in the earlier survey (totalcount)\ngrouse$log_shot_per_km2 = log(grouse$shot_per_km2)\ngrouse$log_totalcount = log(grouse$totalcount)\n\nplot(log_shot_per_km2~log_totalcount, data=grouse)\nplot(log_shot_per_km2~prev, data=grouse) # prev is a factorial\n\nggplot(grouse, aes(x = log_totalcount, y = log_shot_per_km2)) + \n  geom_point() + theme_bw() +\n  stat_smooth(method = \"lm\") +\n  facet_grid(. ~ prev)\n\nlm_1 = lm(log_shot_per_km2~log_totalcount*prev, data=grouse)\nsummary(lm_1)\n\npar(mfrow=c(2,2))\nplot(lm_1)\npar(mfrow=c(1,1))\n\n## is there a more simple model?\nlm_2 = update(lm_1, ~. -log_totalcount:prev)\nanova(lm_1, lm_2)\nAIC(lm_1)\nAIC(lm_2)\n## yes, lm_2 is simpler AND ok.\n\nvisreg(lm_2, xvar=\"log_totalcount\", by=\"prev\", overlay=TRUE)\n\nsummary(lm_2)\npar(mfrow=c(2,2))\nplot(lm_2)\npar(mfrow=c(1,1))\n\n## now we try the fixed model with all \nlm_fix = lm(log_shot_per_km2~moor+drive+log_totalcount+prev, data=grouse)\nsummary(lm_fix)\n\nvisreg(lm_fix)\nvisreg(lm_fix, xvar=\"log_totalcount\", by=\"prev\", overlay=TRUE)\n\n\n## time for mix model\nlibrary(lme4)\ng1.mixed<-lmer(log_shot_per_km2~prev*log_totalcount+(1|moor)+(1|drive),data=grouse)\nsummary(g1.mixed)\n\n## interaction??\ng2.mixed<-update(g1.mixed, ~. -prev:log_totalcount)\n\nanova(g1.mixed, g2.mixed)\n## g2 is ok. better AIC\nsummary(g2.mixed)\n\n# can we get rid of something else?\nanova(g2.mixed, update(g2.mixed, ~. -prev))\nanova(g2.mixed, update(g2.mixed, ~. -log_totalcount))\n## NO\n\nvisreg(g2.mixed, xvar=\"log_totalcount\", by=\"prev\", overlay=TRUE)\nplot(g2.mixed)\n\n## test with corrected AIC: AICc takes into account small samples sizes\nlibrary(MuMIn)\nAICc(g1.mixed)\nAICc(g2.mixed)\n\n## First make a function to label our facets nicely\nshootlabel <- function(var, value) {\n  if(var == \"prev\"){\n    value[value == 1] <- \"First shoot\"\n    value[value == 2] <- \"Second shoot\"\n    value[value == 3] <- \"Third/fourth shoot\"\n  }\n  return(value)\n}\n\naugment(g2.mixed) %>%\n  ggplot(., aes(x = log_totalcount, y = log_shot_per_km2)) +\n  geom_point() +\n  geom_line(aes(x = log_totalcount, y = .fixed)) +\n  labs(y=\"Grouse shot per km2 (log)\",\n       x=\"Grouse counted per km2 (log)\") +\n  facet_grid(.~prev, labeller = shootlabel) +\n  theme_bw()\n\n",
+    "created" : 1449144543818.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2785601796",
+    "id" : "9FC892DC",
+    "lastKnownWriteTime" : 1449160989,
+    "path" : "~/Documents/formations/R - Ecosse/exercises/module8/exercise.R",
+    "project_path" : "exercise.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}
