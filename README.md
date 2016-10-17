@@ -59,9 +59,9 @@ The first step is the reservation of a resource. Connect to the cluster frontend
 
     jdoe@localhost:~$ ssh guane
 
-Once connected to the user frontend, book 1 core for one and a half hour (as we will use R in single-threaded mode, we will need only one core).
+Once connected to the user frontend, book 1 node in interactive session.
 
-    jdoe@guane:~$ oarsub -I -l core=1,walltime="01:30:00"
+    jdoe@guane:~$ salloc -p all --nodes=1 --partition=all srun --pty bash
 
 When the job is running and you are connected load R and see something like this:
 
@@ -341,7 +341,7 @@ The first part of the tutorial is now over, you can connect to `guane` cluster a
 
 	jdoe@localhost:~$ ssh guane
 	
-    jdoe@guane:~$ oarsub -I -l nodes=2,walltime=2
+    jdoe@guane:~$ salloc -p all --nodes=2 --partition=all srun --pty bash
 
 
 When the job is running and you are connected run R.
@@ -387,24 +387,13 @@ Using several cores makes the process shorter.
 	 MCLAPPLY 233.8035 235.1089 235.9138 236.6393 263.934    10
     
 
-It is nice to visualize all your cores working on your node with `htop` for example. You can connect to the same node from another terminal by typing:
-
-	jdoe@guane:~$ oarstat -u
-	Job id     Name           User           Submission Date     S Queue
-	---------- -------------- -------------- ------------------- - ----------
-	6664321                   jdoe           2015-06-03 14:24:23 R default
-Note the `Job id` field. Put this job id in the next command:
-
-	jdoe@guane:~$ oarsub -C 6664321
-Then `htop` will show you your cores working if you call again the `mclapply()` function.
-
-
 Finally you can save the `air` R object to reuse it in an other R session.
 
     > save(air, file="./air.rda")
 
-Then quit your current R session but **do not** end your current oar job.
+Then quit your current R session but **do not** end your current job.
 
+<!--
 ### Cluster Parallelization
 The `parLapply()` function will create a cluster of processes, which could even reside on different machines on the network, and they communicate via TCP/IP or MPI in order to pass the tasks and results between each other.
 Thus you have to load necessary packages and export necessary data and functions to the global environment of the cluster workers.
@@ -455,16 +444,6 @@ Finalize and cleanup things.
 In this section we will use the same example as previously but with MPI connections. 
 For that purpose we will use two libraries: `rmpi` and `snow`.
 
-<!--
-As we are using R compiled with Intel compiler we will have to specify manually some paths and which version of MPI we are using when installing `rmpi`.
-
-	> install.packages("Rmpi",
-	                   configure.args =
-	                   c(paste0("--with-Rmpi-include=","~jemeras/openmpi-1.8.6/build/ompi/include"),
-	                     paste0("--with-Rmpi-libpath=","~jemeras/openmpi-1.8.6/build/ompi/lib"),
-						 paste0("--with-mpi=","~jemeras/openmpi-1.8.6/build/ompi/"),
-	                     "--with-Rmpi-type=OPENMPI"))
--->
 
 Outside of R shell write a file named `parallelAirDests.R` with the following code.
 
@@ -508,6 +487,7 @@ Then, still outside of R and on your job head node run:
 	mpirun -np 1 -machinefile $OAR_NODE_FILE Rscript parallelAirDests.R
 You may find strange the `-np 1`, in fact this is because it is `snow` that manages the processes spawning.
 
+--> 
 
 <!--
 # With dplyr

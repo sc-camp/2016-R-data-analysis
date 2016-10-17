@@ -76,7 +76,7 @@
        First connect to the cluster, then submit a job to run R.
         \begin{cmdline}
             \cmdlinelocal{ssh cluster}\\
-            \cmdlinefrontend{oarsub -I -l core=1,walltime="00:30:00"}\\
+            \cmdlinefrontend{salloc -p all --nodes=1 --partition=all srun --pty bash}\\
             \cmdlinenode{R}
         \end{cmdline}
         \item Install and Load a Package
@@ -110,8 +110,8 @@
     \item R in parallel
      \begin{itemize}
       \item on one machine
-      \item on a cluster with socket communications
-      \item MPI communications
+      %\item on a cluster with socket communications
+      %\item MPI communications
      \end{itemize}
      
 \end{itemize}      
@@ -123,7 +123,7 @@
 \frame{
   \frametitle{Exercises}
     \begin{itemize}
-      \item Start the tutorial \url{https://github.com/sc-camp/camp2016}
+      \item Start the tutorial \url{https://github.com/sc-camp/2016-R-data-analysis}
       \begin{itemize} 
 	      \item Plot 2 graphs in section Simple Plotting
 	      \item Answer 2 questions at the end of section Organizing your Data
@@ -131,7 +131,7 @@
       \end{itemize}
       \item Plot a speedup graph
       \begin{itemize}
-       \item with different number of cores and/or machines
+       \item with different number of cores %and/or machines
        \item needs: ggplot, parallel R
       \end{itemize}
     \end{itemize}
