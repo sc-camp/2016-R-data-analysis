@@ -50,11 +50,7 @@ You will also find handy to use the [R-Studio](https://www.rstudio.com/) graphic
 Thus you can use whether R interactive shell or R-Studio embedded shell.
 
 ### On the cluster
-R is installed on guane in the directory: `~jemeras/bin/R`. In order to use it you have to add it to your path. Edit your `.bashrc` file and add:
-
-	export PATH=~jemeras/bin:$PATH
-Note that you have to source your .bashrc file to make these modifications active. You should also add `source .bashrc` in your `.profile` file.
-
+R is installed on guane's nodes.
 The first step is the reservation of a resource. Connect to the cluster frontend
 
     jdoe@localhost:~$ ssh guane
