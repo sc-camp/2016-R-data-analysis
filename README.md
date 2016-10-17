@@ -103,9 +103,9 @@ To install libraries you can use the `install.packages()` function. e.g
 	> install.packages("plyr")
 -->
 
-	> install.packages("ggplot2")
+	> install.packages(c("ggplot2", "ggplot2movies"))
 
-This will install the `ggplot2` library.
+This will install the `ggplot2` and `ggplot2movies` libraries.
 
 Note: on the first run, R might ask you various questions during the installation. e.g. selecting a CRAN mirror to use for downloading packages. Select a mirror close to your location. For other questions, using default values is ok.
 
@@ -121,7 +121,7 @@ A call to `sessionInfo()` function will return `ggplot2` version as it is now at
 
 ### From Single Dataset 
 Movies dataset, derived from data provided by [IMDB](http://imdb.com) is a sample dataset available in `ggplot2` for testing purpose. Its data description can be found [here](http://had.co.nz/data/movies/description.pdf).
-Thus, when loading `ggplot2` library, this dataset is available under the name: `movies`.
+Thus, when loading `ggplot2` and `ggplot2movies` libraries, this dataset is available under the name: `movies`.
 
 
 Now let's take a (reproducible) sample of 1000 movies and plot their distribution regarding their rating.
