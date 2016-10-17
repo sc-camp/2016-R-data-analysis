@@ -333,11 +333,11 @@ DT[,c(min(v), max(v)),by=x]
 -->
 
 ## Parallel R
-The first part of the tutorial is now over, you can connect to `guane` cluster and submit an other job requesting several machines.
+The first part of the tutorial is now over, you can connect to `guane` cluster and submit an other job if your previous is terminated.
 
 	jdoe@localhost:~$ ssh guane
 	
-    jdoe@guane:~$ salloc -p all --nodes=2 --partition=all srun --pty bash
+    jdoe@guane:~$ salloc -p all --nodes=1 --partition=all srun --pty bash
 
 
 When the job is running and you are connected run R.
