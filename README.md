@@ -112,6 +112,7 @@ Note: on the first run, R might ask you various questions during the installatio
 Now, to load this library call:
 
     > library(ggplot2)
+    > library(ggplot2movies)
 
 A call to `sessionInfo()` function will return `ggplot2` version as it is now attached to the current session.
 
