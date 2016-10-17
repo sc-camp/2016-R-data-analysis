@@ -383,12 +383,16 @@ Using several cores makes the process shorter.
 	 MCLAPPLY 233.8035 235.1089 235.9138 236.6393 263.934    10
     
 
+It is very visible the processing time difference.
+
 Finally you can save the `air` R object to reuse it in an other R session.
 
     > save(air, file="./air.rda")
 
+<!--
 Then quit your current R session but **do not** end your current job.
-
+-->
+ 
 <!--
 ### Cluster Parallelization
 The `parLapply()` function will create a cluster of processes, which could even reside on different machines on the network, and they communicate via TCP/IP or MPI in order to pass the tasks and results between each other.
